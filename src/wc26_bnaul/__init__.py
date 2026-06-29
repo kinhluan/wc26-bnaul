@@ -2,6 +2,14 @@
 """
 wc26-bnaul — ClawCup Agent for FIFA World Cup 2026
 AI agent dự đoán kết quả World Cup 2026 qua ClawCup API
+
+Commands:
+    me          Show agent info
+    fixtures    List matches (--status open/closed/all)
+    predict     Submit a prediction
+    mine        Show my predictions
+    check       Check all predictions vs fixtures
+    fifa-data   Fetch FIFA data from external APIs
 """
 
 import argparse
@@ -49,7 +57,7 @@ def sign_request(method: str, path: str, body_bytes: bytes, secret: str) -> dict
 
 
 def api_request(method: str, path: str, body: dict = None) -> dict:
-    """Gửi request đã signed tới ClawCup API."""
+    """Gửi request đến ClawCup API với HMAC signing."""
     token, secret = get_credentials()
     url = f"{API_BASE}{path}"
     headers = {
@@ -62,17 +70,13 @@ def api_request(method: str, path: str, body: dict = None) -> dict:
     sign_headers = sign_request(method, path, body_bytes, secret)
     headers.update(sign_headers)
 
-    req = urllib.request.Request(url, data=body_bytes if body_bytes else None, method=method, headers=headers)
+    req = urllib.request.Request(url, data=body_bytes, method=method, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             return json.loads(resp.read().decode())
     except urllib.error.HTTPError as e:
-        print(f"API Error: {e.code} {e.reason}", file=sys.stderr)
-        print(f"Response: {e.read().decode()}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"API Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        error_body = e.read().decode()
+        raise RuntimeError(f"API Error: {e.code} {e.reason}\nResponse: {error_body}")
 
 
 def cmd_me():
@@ -82,43 +86,29 @@ def cmd_me():
 
 
 def cmd_fixtures(status: str = "open"):
-    """Liệt kê các trận đấu."""
+    """Hiển thị danh sách trận đấu."""
     data = api_request("GET", f"/fixtures?status={status}")
     matches = data.get("matches", [])
     if not matches:
         print("No matches found.")
         return
-
-    print(f"{'Match ID':<10} {'Round':<14} {'Home':<20} {'Away':<20} {'Kickoff (UTC)':<20}")
-    print("-" * 90)
+    print(f"{'ID':<8} {'Home':<15} {'Away':<15} {'Status':<8} {'Kickoff (UTC)':<20}")
+    print("-" * 70)
     for m in matches:
-        kickoff = m.get("kickoff_utc", "N/A")
-        print(
-            f"{m['match_id']:<10} {m.get('round','?'):<14} "
-            f"{m['home']:<20} {m['away']:<20} {kickoff:<20}"
-        )
+        print(f"{m['match_id']:<8} {m.get('home', '?'):<15} {m.get('away', '?'):<15} {m.get('status', '?'):<8} {m.get('kickoff_utc', 'N/A'):<20}")
 
 
 def cmd_predict(match_id: str, pick: str, reasoning: str, exact_score: str = None, probabilities: list = None, binary: bool = False):
-    """Gửi dự đoán cho một trận đấu."""
-    payload = {
-        "match_id": match_id,
-        "reasoning": reasoning,
-    }
-
-    if binary:
-        payload["format"] = "binary"
-
-    if probabilities:
-        payload["p"] = probabilities
-    elif pick:
+    """Gửi dự đoán."""
+    payload = {"match_id": match_id, "reasoning": reasoning}
+    if pick:
         payload["pick"] = pick
-
     if exact_score:
         payload["exact_score"] = exact_score
-
-    # Sort payload keys to match the JSON serialization used for signing
-    payload = dict(sorted(payload.items()))
+    if probabilities:
+        payload["p"] = probabilities
+    if binary:
+        payload["format"] = "binary"
 
     print(f"Submitting prediction for {match_id}...")
     data = api_request("POST", "/predictions", payload)
@@ -229,6 +219,81 @@ def cmd_check():
             print(f"  Reasoning: {preview}")
 
 
+def cmd_fifa_data(source: str, match_id: str = None, team_id: str = None, fixture_id: int = None, live: bool = False):
+    """Fetch data from external FIFA APIs."""
+    from .fifa_data import (
+        get_fixtures_football_data,
+        get_match_details_football_data,
+        get_fixtures_api_football,
+        get_player_stats_api_football,
+        get_injuries_api_football,
+        get_match_predictions_api_football,
+        get_team_statistics_api_football,
+        predict_from_api_data,
+    )
+    
+    print(f"=== FIFA DATA: {source} ===\n")
+    
+    if source == "football-data":
+        if match_id:
+            print(f"Fetching match details for {match_id}...")
+            try:
+                data = get_match_details_football_data(match_id)
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            except Exception as e:
+                print(f"Error: {e}")
+        else:
+            print("Fetching World Cup fixtures...")
+            try:
+                fixtures = get_fixtures_football_data()
+                print(f"Found {len(fixtures)} fixtures")
+                for f in fixtures[:5]:
+                    home = f.get("homeTeam", {}).get("name", "?")
+                    away = f.get("awayTeam", {}).get("name", "?")
+                    status = f.get("status", "?")
+                    print(f"  {home} vs {away} - {status}")
+            except Exception as e:
+                print(f"Error: {e}")
+    
+    elif source == "api-football":
+        if fixture_id:
+            print(f"Fetching player stats for fixture {fixture_id}...")
+            try:
+                stats = get_player_stats_api_football(fixture_id)
+                print(f"Found {len(stats)} player records")
+                print(json.dumps(stats[:2], indent=2, ensure_ascii=False))
+            except Exception as e:
+                print(f"Error: {e}")
+        elif live:
+            print("Fetching live matches...")
+            try:
+                fixtures = get_fixtures_api_football(live=True)
+                print(f"Found {len(fixtures)} live matches")
+                for f in fixtures[:5]:
+                    home = f.get("teams", {}).get("home", {}).get("name", "?")
+                    away = f.get("teams", {}).get("away", {}).get("name", "?")
+                    status = f.get("fixture", {}).get("status", {}).get("long", "?")
+                    print(f"  {home} vs {away} - {status}")
+            except Exception as e:
+                print(f"Error: {e}")
+        else:
+            print("Fetching World Cup fixtures...")
+            try:
+                fixtures = get_fixtures_api_football()
+                print(f"Found {len(fixtures)} fixtures")
+                for f in fixtures[:5]:
+                    home = f.get("teams", {}).get("home", {}).get("name", "?")
+                    away = f.get("teams", {}).get("away", {}).get("name", "?")
+                    print(f"  {home} vs {away}")
+            except Exception as e:
+                print(f"Error: {e}")
+    
+    elif source == "predict":
+        print("Generating prediction from API data...")
+        print("Note: Requires team_id for both home and away teams")
+        print("Example: wc26-bnaul fifa-data --source predict --team-id 1")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="wc26-bnaul",
@@ -260,6 +325,15 @@ def main():
     # check
     sub.add_parser("check", help="Check all predictions vs fixtures")
 
+    # fifa-data
+    p_fifa = sub.add_parser("fifa-data", help="Fetch FIFA data from external APIs")
+    p_fifa.add_argument("--source", choices=["football-data", "api-football", "predict"],
+                        default="football-data", help="Data source")
+    p_fifa.add_argument("--match-id", help="Match ID for detailed stats")
+    p_fifa.add_argument("--team-id", help="Team ID for team statistics")
+    p_fifa.add_argument("--fixture-id", type=int, help="Fixture ID for API-Football")
+    p_fifa.add_argument("--live", action="store_true", help="Get live matches only")
+
     args = parser.parse_args()
 
     if args.command == "me":
@@ -268,6 +342,8 @@ def main():
         cmd_fixtures(args.status)
     elif args.command == "check":
         cmd_check()
+    elif args.command == "fifa-data":
+        cmd_fifa_data(args.source, args.match_id, args.team_id, args.fixture_id, args.live)
     elif args.command == "predict":
         pick = args.pick
         probs = None
