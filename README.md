@@ -41,128 +41,111 @@ cp .env.example .env  # Edit with your tokens
 
 ## Ensemble Prediction Model
 
-### Algorithm Flow
+### Algorithm Flow (Mermaid)
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         ENSEMBLE PREDICTION PIPELINE                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-  │  Input Data │───→│ 6 Components│───→│   Weighted  │───→│   Output    │
-  │             │    │             │    │   Combine   │    │             │
-  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-         │                  │                  │                  │
-         │            ┌─────┴─────┐            │                  │
-         │            │           │            │                  │
-         │      ┌─────┐    ┌─────┐           │                  │
-         │      │xG   │    │Elo  │           │                  │
-         │      │25%  │    │20%  │           │                  │
-         │      └─────┘    └─────┘           │                  │
-         │            │           │            │                  │
-         │      ┌─────┐    ┌─────┐            │                  │
-         │      │Bet  │    │Form │            │                  │
-         │      │20%  │    │15%  │            │                  │
-         │      └─────┘    └─────┘            │                  │
-         │            │           │            │                  │
-         │      ┌─────┐    ┌─────┐            │                  │
-         │      │H2H  │    │Inj  │            │                  │
-         │      │10%  │    │10%  │            │                  │
-         │      └─────┘    └─────┘            │                  │
-         │                                    │                  │
-         └────────────────────────────────────┘                  │
-                                              │                   │
-                                              ↓                   ↓
-                                       ┌─────────────┐     ┌─────────────┐
-                                       │ 3-Way Prob  │────→│ Binary Prob │
-                                       │ H/D/A       │     │ (Knockout)  │
-                                       └─────────────┘     └─────────────┘
+```mermaid
+flowchart TD
+    A[Input Data] --> B[6 Components]
+    B --> C[Weighted Combine]
+    C --> D[3-Way Prob<br/>H/D/A]
+    D --> E[Binary Prob<br/>Knockout]
+    E --> F[Monte Carlo<br/>Validation]
+    
+    B --> B1[xG 25%]
+    B --> B2[Betting 20%]
+    B --> B3[Elo 20%]
+    B --> B4[Form 15%]
+    B --> B5[H2H 10%]
+    B --> B6[Injury 10%]
+    
+    A --> A1[FIFA Rank]
+    A --> A2[xG / xGA]
+    A --> A3[Bookmaker Odds]
+    A --> A4[Last 5 Results]
+    A --> A5[Historical H2H]
+    A --> A6[Key Players Out]
+    
+    style A fill:#e1f5fe
+    style C fill:#fff3e0
+    style E fill:#e8f5e9
+    style F fill:#fce4ec
 ```
 
 ### Mathematical Formulation
 
-**1. Expected Goals (xG) — Weight: 25%**
+#### 1. Expected Goals (xG) — Weight: 25%
 
 The state-of-the-art metric in football analytics. xG measures the quality of chances created.
 
-```
-home_xG = team_xG × 0.7 + opponent_xGA × 0.3
-away_xG = team_xG × 0.7 + opponent_xGA × 0.3
+$$\text{home}_{xG} = \text{team}_{xG} \times 0.7 + \text{opponent}_{xGA} \times 0.3$$
 
-P_xG(home) = home_xG / (home_xG + away_xG)
-```
+$$\text{away}_{xG} = \text{team}_{xG} \times 0.7 + \text{opponent}_{xGA} \times 0.3$$
+
+$$P_{xG}(\text{home}) = \frac{\text{home}_{xG}}{\text{home}_{xG} + \text{away}_{xG}}$$
 
 Where:
-- `team_xG` = expected goals scored per match
-- `opponent_xGA` = expected goals conceded per match
+- $\text{team}_{xG}$ = expected goals scored per match
+- $\text{opponent}_{xGA}$ = expected goals conceded per match
 
-**2. Elo Rating — Weight: 20%**
+#### 2. Elo Rating — Weight: 20%
 
 Dynamic rating system adapted for football.
 
-```
-E_A = 1 / (1 + 10^((R_B - R_A) / 400))
+$$E_A = \frac{1}{1 + 10^{(R_B - R_A)/400}}$$
 
-P_Elo(home) = 1 / (1 + 10^((FIFA_away - FIFA_home) / 400))
-```
+$$P_{\text{Elo}}(\text{home}) = \frac{1}{1 + 10^{(\text{FIFA}_{\text{away}} - \text{FIFA}_{\text{home}})/400}}$$
 
-**3. Betting Odds — Weight: 20%**
+#### 3. Betting Odds — Weight: 20%
 
 Implied probability from bookmakers (vig removed).
 
-```
-implied_prob = 1 / decimal_odds
-P_bet(home) = implied_home / (implied_home + implied_away)
-```
+$$\text{implied} = \frac{1}{\text{decimal\_odds}}$$
+
+$$P_{\text{bet}}(\text{home}) = \frac{\text{implied}_{\text{home}}}{\text{implied}_{\text{home}} + \text{implied}_{\text{away}}}$$
 
 Bookmakers spend millions calibrating these — strong signal.
 
-**4. Recent Form — Weight: 15%**
+#### 4. Recent Form — Weight: 15%
 
 Exponential decay weighting (recent matches weighted higher).
 
-```
-form_score = Σ(w_i × result_i)
+$$\text{form\_score} = \sum_{i=1}^{5} w_i \times r_i$$
 
-weights = [0.35, 0.25, 0.20, 0.12, 0.08]  # Most recent first
-result = {win: 1.0, draw: 0.5, loss: 0.0}
+$$\text{weights} = [0.35, 0.25, 0.20, 0.12, 0.08]$$
 
-P_form(home) = form_home / (form_home + form_away)
-```
+$$r_i = \begin{cases} 1.0 & \text{win} \\ 0.5 & \text{draw} \\ 0.0 & \text{loss} \end{cases}$$
 
-**5. Head-to-Head — Weight: 10%**
+$$P_{\text{form}}(\text{home}) = \frac{\text{form}_{\text{home}}}{\text{form}_{\text{home}} + \text{form}_{\text{away}}}$$
+
+#### 5. Head-to-Head — Weight: 10%
 
 Historical matchup record.
 
-```
-P_H2H(home) = (H2H_home_wins + 0.5 × H2H_draws) / total_H2H
-```
+$$P_{\text{H2H}}(\text{home}) = \frac{\text{H2H}_{\text{home\_wins}} + 0.5 \times \text{H2H}_{\text{draws}}}{\text{total\_H2H}}$$
 
-**6. Injury Adjustment — Weight: 10%**
+#### 6. Injury Adjustment — Weight: 10%
 
 Key player availability impact.
 
-```
-available = 11 - injuries
-P_inj(home) = available_home / (available_home + available_away)
-```
+$$P_{\text{inj}}(\text{home}) = \frac{11 - \text{injuries}_{\text{home}}}{(11 - \text{injuries}_{\text{home}}) + (11 - \text{injuries}_{\text{away}})}$$
 
 ### Ensemble Combination
 
-```
-P_ensemble = (P_xG × 0.25 + P_Elo × 0.20 + P_bet × 0.20 +
-             P_form × 0.15 + P_H2H × 0.10 + P_inj × 0.10)
+$$P_{\text{ensemble}} = \frac{P_{xG} \times 0.25 + P_{\text{Elo}} \times 0.20 + P_{\text{bet}} \times 0.20 + P_{\text{form}} \times 0.15 + P_{\text{H2H}} \times 0.10 + P_{\text{inj}} \times 0.10}{\sum \text{weights}}$$
 
-P_home_win = P_ensemble × 0.75
-P_draw = 0.20 × (1 - |P_ensemble - 0.5| × 2)
-P_away_win = 1 - P_home_win - P_draw
-```
+**3-way probabilities:**
 
-**Knockout conversion:**
-```
-P_home_advance = (P_home_win + P_draw) / (P_home_win + P_draw + P_away_win)
-P_away_advance = P_away_win / (P_home_win + P_draw + P_away_win)
-```
+$$P_{\text{home\_win}} = P_{\text{ensemble}} \times 0.75$$
+
+$$P_{\text{draw}} = 0.20 \times (1 - |P_{\text{ensemble}} - 0.5| \times 2)$$
+
+$$P_{\text{away\_win}} = 1 - P_{\text{home\_win}} - P_{\text{draw}}$$
+
+**Knockout conversion (binary):**
+
+$$P_{\text{home\_advance}} = \frac{P_{\text{home\_win}} + P_{\text{draw}}}{P_{\text{home\_win}} + P_{\text{draw}} + P_{\text{away\_win}}}$$
+
+$$P_{\text{away\_advance}} = \frac{P_{\text{away\_win}}}{P_{\text{home\_win}} + P_{\text{draw}} + P_{\text{away\_win}}}$$
 
 ### Monte Carlo Validation
 
@@ -184,12 +167,11 @@ Validates analytical probabilities against simulation.
 
 Brier score is a **strictly proper scoring rule**:
 
-```
-E[Brier] = π(p-1)² + (1-π)p² = p² - 2πp + π
+$$E[\text{Brier}] = \pi(p-1)^2 + (1-\pi)p^2 = p^2 - 2\pi p + \pi$$
 
-d/dp E[Brier] = 2p - 2π = 0
-→ p = π (optimal)
-```
+$$\frac{d}{dp} E[\text{Brier}] = 2p - 2\pi = 0$$
+
+$$\boxed{p = \pi \text{ (optimal)}}$$
 
 **Implication:** Always submit your true belief. Over-confidence increases expected Brier score.
 
@@ -243,6 +225,13 @@ uv run wc26-bnaul fifa-data --source api-football --live
 ./wc26.sh run m001   # 1. Fetch news → 2. Ensemble model → 3. Prompt prob → 4. Submit
 ```
 
+### Batch Predictions (All Matches)
+
+```bash
+uv run python -m wc26_bnaul.batch_predict --dry-run   # Preview all 31 matches
+uv run python -m wc26_bnaul.batch_predict --live     # Submit all
+```
+
 ### Monitoring
 
 ```bash
@@ -269,12 +258,12 @@ uv run wc26-bnaul backtest-demo    # Historical backtest
 
 | Component | Weight | Source | Formula |
 |-----------|--------|--------|---------|
-| **xG** | 0.25 | StatsBomb/API-Football | `P = xG / (xG + xGA)` |
-| **Betting Odds** | 0.20 | Bookmakers | `P = implied_prob / sum` |
-| **Elo Rating** | 0.20 | FIFA Rank | `P = 1 / (1 + 10^((R_B-R_A)/400))` |
+| **xG** | 0.25 | StatsBomb/API-Football | $P = \frac{xG}{xG + xGA}$ |
+| **Betting Odds** | 0.20 | Bookmakers | $P = \frac{\text{implied}}{\sum \text{implied}}$ |
+| **Elo Rating** | 0.20 | FIFA Rank | $P = \frac{1}{1 + 10^{\Delta R/400}}$ |
 | **Recent Form** | 0.15 | API-Football | Exponential decay weights |
-| **H2H History** | 0.10 | API-Football | `(wins + 0.5×draws) / total` |
-| **Injuries** | 0.10 | API-Football | `(11 - injuries) / 22` |
+| **H2H History** | 0.10 | API-Football | $\frac{wins + 0.5 \times draws}{total}$ |
+| **Injuries** | 0.10 | API-Football | $\frac{11 - injuries}{22}$ |
 
 **Output:** 3-way probabilities (H/D/A) + binary (knockout) + confidence score + component breakdown.
 
