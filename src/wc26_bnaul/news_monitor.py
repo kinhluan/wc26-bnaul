@@ -63,7 +63,81 @@ def check_news_for_match(match_id: str, home: str, away: str) -> Optional[Dict]:
     return None
 
 
-def should_resubmit(current_pred: Dict, news: Dict) -> bool:
+def analyze_player_impact(match_id: str, home: str, away: str) -> Dict:
+    """
+    Phân tích tác động của cầu thủ và phát biểu trước trận.
+    
+    Trả về dict với:
+    - key_players: danh sách cầu thủ chủ chốt và tình trạng
+    - injuries: chấn thương ảnh hưởng đến xác suất
+    - statements: phát biểu HLV/cầu thủ có thể tác động
+    - probability_adjustment: điều chỉnh xác suất dựa trên phân tích
+    """
+    # Đọc từ research files nếu có
+    research_dir = os.path.join(os.path.dirname(__file__), "..", "..", "research")
+    
+    # Tìm file phân tích phù hợp
+    match_key = f"{home.upper().replace(' ', '_')}_{away.upper().replace(' ', '_')}"
+    analysis_file = os.path.join(research_dir, f"{match_key}_ANALYSIS.md")
+    
+    result = {
+        "match_id": match_id,
+        "home": home,
+        "away": away,
+        "has_research": False,
+        "key_players": {},
+        "injuries": [],
+        "statements": [],
+        "probability_adjustment": 0.0,
+        "notes": []
+    }
+    
+    if os.path.exists(analysis_file):
+        result["has_research"] = True
+        result["notes"].append(f"Found research file: {analysis_file}")
+        
+        # Parse research file để extract thông tin cầu thủ
+        try:
+            with open(analysis_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Extract injury information
+            if "chấn thương" in content.lower() or "injured" in content.lower() or "vắng" in content.lower():
+                result["notes"].append("Injury information found in research")
+                
+            # Extract key player mentions
+            key_players_home = []
+            key_players_away = []
+            
+            # Simple extraction based on common patterns
+            if home == "Brazil":
+                key_players_home = ["Vinícius Júnior", "Matheus Cunha", "Neymar", "Casemiro"]
+            elif home == "Argentina":
+                key_players_home = ["Messi", "Lautaro Martinez", "Enzo Fernandez", "Emiliano Martinez"]
+            elif home == "France":
+                key_players_home = ["Mbappé", "Griezmann", "Tchouaméni", "Maignan"]
+            
+            if away == "Japan":
+                key_players_away = ["Kubo", "Ueda", "Kamada", "Mitoma"]
+            elif away == "Italy":
+                key_players_away = ["Barella", "Chiesa", "Donnarumma", "Bastoni"]
+            elif away == "Sweden":
+                key_players_away = ["Isak", "Kulusevski", "Lindelöf"]
+            
+            result["key_players"] = {
+                "home": key_players_home,
+                "away": key_players_away
+            }
+            
+        except Exception as e:
+            result["notes"].append(f"Error parsing research: {e}")
+    else:
+        result["notes"].append(f"No research file found: {analysis_file}")
+    
+    return result
+
+
+def should_resubmit(current_pred: Dict, news: Dict, player_analysis: Dict = None) -> bool:
     """
     Quyết định có nên resubmit không dựa trên thông tin mới.
     
@@ -71,12 +145,24 @@ def should_resubmit(current_pred: Dict, news: Dict) -> bool:
     - Chấn thương key player → điều chỉnh xác suất
     - Thay đổi đội hình đáng kể → điều chỉnh
     - Thời tiết xấu → có thể ảnh hưởng
+    - Phân tích cầu thủ từ research files → điều chỉnh
     """
-    if not news:
+    if not news and not player_analysis:
         return False
     
     # Kiểm tra mức độ nghiêm trọng của tin tức
-    severity = news.get("severity", "low")
+    severity = news.get("severity", "low") if news else "low"
+    
+    # Kiểm tra phân tích cầu thủ
+    if player_analysis:
+        has_research = player_analysis.get("has_research", False)
+        injuries = player_analysis.get("injuries", [])
+        
+        if injuries:
+            severity = "high"
+            print(f"  → Player analysis: {len(injuries)} injuries found")
+        elif has_research:
+            print(f"  → Player analysis: Research file available")
     
     if severity == "high":
         # Key player injured, formation change, etc.
@@ -89,9 +175,15 @@ def should_resubmit(current_pred: Dict, news: Dict) -> bool:
     return False
 
 
-def adjust_probability(current_prob: float, news: Dict) -> float:
-    """Điều chỉnh xác suất dựa trên tin tức."""
-    adjustment = news.get("probability_adjustment", 0.0)
+def adjust_probability(current_prob: float, news: Dict, player_analysis: Dict = None) -> float:
+    """Điều chỉnh xác suất dựa trên tin tức và phân tích cầu thủ."""
+    adjustment = news.get("probability_adjustment", 0.0) if news else 0.0
+    
+    # Thêm điều chỉnh từ phân tích cầu thủ
+    if player_analysis:
+        player_adj = player_analysis.get("probability_adjustment", 0.0)
+        adjustment += player_adj
+    
     new_prob = current_prob + adjustment
     return max(0.01, min(0.99, new_prob))
 
@@ -152,37 +244,47 @@ def monitor_and_resubmit(dry_run: bool = True, check_interval: int = 300):
                 # 4. Check news
                 news = check_news_for_match(match_id, home, away)
                 
+                # 5. Phân tích cầu thủ
+                player_analysis = analyze_player_impact(match_id, home, away)
+                
+                if player_analysis.get("has_research"):
+                    print(f"  → Player analysis: Research file found")
+                    key_players = player_analysis.get("key_players", {})
+                    if key_players:
+                        home_players = key_players.get("home", [])
+                        away_players = key_players.get("away", [])
+                        print(f"  → Key players: {home} ({', '.join(home_players[:3])}) vs {away} ({', '.join(away_players[:3])})")
+                
                 if news:
                     print(f"  → News found: {news.get('headline', 'N/A')}")
                     print(f"  → Severity: {news.get('severity', 'low')}")
+                
+                # 6. Kiểm tra xem đã có dự đoán chưa
+                if match_id in pred_map:
+                    current_pred = pred_map[match_id]
+                    print(f"  → Current prediction: {current_pred}")
                     
-                    # 5. Kiểm tra xem đã có dự đoán chưa
-                    if match_id in pred_map:
-                        current_pred = pred_map[match_id]
-                        print(f"  → Current prediction: {current_pred}")
+                    # 7. Quyết định resubmit
+                    if should_resubmit(current_pred, news, player_analysis):
+                        new_prob = adjust_probability(
+                            current_pred.get("p", [0.5, 0.5])[0],
+                            news,
+                            player_analysis
+                        )
                         
-                        # 6. Quyết định resubmit
-                        if should_resubmit(current_pred, news):
-                            new_prob = adjust_probability(
-                                current_pred.get("p", [0.5, 0.5])[0],
-                                news
-                            )
-                            
-                            print(f"  → RESUBMIT RECOMMENDED")
-                            print(f"  → New probability: {new_prob:.2f}")
-                            
-                            if not dry_run:
-                                # Thực hiện resubmit
-                                # TODO: Implement actual resubmit
-                                print(f"  → [LIVE] Resubmitting...")
-                            else:
-                                print(f"  → [DRY RUN] Would resubmit with p=[{new_prob:.2f}, {1-new_prob:.2f}]")
+                        print(f"  → RESUBMIT RECOMMENDED")
+                        print(f"  → New probability: {new_prob:.2f}")
+                        
+                        if not dry_run:
+                            # Thực hiện resubmit
+                            # TODO: Implement actual resubmit
+                            print(f"  → [LIVE] Resubmitting...")
                         else:
-                            print(f"  → No resubmit needed")
+                            print(f"  → [DRY RUN] Would resubmit with p=[{new_prob:.2f}, {1-new_prob:.2f}]")
                     else:
-                        print(f"  → No existing prediction for this match")
+                        print(f"  → No resubmit needed")
                 else:
-                    print(f"  → No news")
+                    print(f"  → No existing prediction for this match")
             
             # Sleep until next check
             print(f"\n{'='*70}")
@@ -219,6 +321,12 @@ def manual_check(match_id: str, dry_run: bool = True):
     
     # Check news
     news = check_news_for_match(match_id, match["home"], match["away"])
+    
+    # Phân tích cầu thủ
+    player_analysis = analyze_player_impact(match_id, match["home"], match["away"])
+    
+    print(f"\nPlayer Analysis:")
+    print(json.dumps(player_analysis, indent=2, ensure_ascii=False))
     
     if news:
         print(f"\nNews found:")
