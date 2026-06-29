@@ -562,10 +562,16 @@ def analyze_news_content(news_items: List[Dict], home: str, away: str) -> Dict:
         }
     """
     severity_keywords = {
-        "high": ["injured", "injury", "out", "suspended", "red card", "ruled out", "confirmed absent"],
-        "medium": ["doubtful", "fitness test", "knock", "minor", "training", "lineup", "starting xi", "formation"],
+        "high": ["injured", "injury", "ruled out", "ruled-out", "suspended", "red card", "confirmed absent", "forced off", "carried off", "stretcher"],
+        "medium": ["doubtful", "fitness test", "knock", "minor", "training", "lineup", "starting xi", "formation", "tactical change"],
         "low": ["weather", "pitch", "referee", "crowd", "atmosphere"],
     }
+    
+    # Keywords that should NOT trigger alone (false positive prone)
+    false_positive_prone = ["out"]
+    
+    # Require "out" to be paired with injury context
+    injury_context = ["injured", "injury", "ruled", "forced", "carried", "stretcher", "knock", "doubtful", "fitness", "absent"]
     
     keywords_found = []
     severity_score = 0
@@ -578,6 +584,13 @@ def analyze_news_content(news_items: List[Dict], home: str, away: str) -> Dict:
         for sev, words in severity_keywords.items():
             for word in words:
                 if word in text:
+                    # Check if "out" is in false-positive context
+                    if word in false_positive_prone:
+                        # "out" alone is not enough — need injury context
+                        has_context = any(ctx in text for ctx in injury_context)
+                        if not has_context:
+                            continue  # Skip this keyword
+                    
                     keywords_found.append(word)
                     if sev == "high":
                         severity_score += 2
