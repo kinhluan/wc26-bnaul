@@ -59,8 +59,8 @@ def api_request(method: str, path: str, body: dict = None) -> dict:
     body_bytes = b""
     if body is not None:
         body_bytes = json.dumps(body, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
-        sign_headers = sign_request(method, path, body_bytes, secret)
-        headers.update(sign_headers)
+    sign_headers = sign_request(method, path, body_bytes, secret)
+    headers.update(sign_headers)
 
     req = urllib.request.Request(url, data=body_bytes if body_bytes else None, method=method, headers=headers)
     try:
