@@ -101,6 +101,8 @@ show_interactive_menu() {
     echo ""
     
     echo -e "${RED}[19]${NC} ${BOLD}run${NC} <match_id>          — FULL PIPELINE: news → model → submit"
+    echo -e "${MAGENTA}[20]${NC} ${BOLD}performance${NC}           — View prediction accuracy & Brier scores"
+    echo -e "${MAGENTA}[21]${NC} ${BOLD}suggest-weights${NC}         — Get weight updates based on history"
     echo ""
     
     echo -e "${CYAN}[13]${NC} ${BOLD}test${NC}                  — Run all tests"
@@ -472,6 +474,16 @@ run_interactive() {
                 read -r match_id
                 run_pipeline "$match_id"
                 ;;
+            20)
+                check_uv
+                print_section "Prediction Performance"
+                uv run wc26-bnaul performance
+                ;;
+            21)
+                check_uv
+                print_section "Suggested Weight Updates"
+                uv run wc26-bnaul suggest-weights
+                ;;
             13)
                 check_uv
                 print_section "Running Tests"
@@ -656,6 +668,18 @@ case "${1:-}" in
     
     env-check)
         env_check
+        ;;
+    
+    performance)
+        check_uv
+        print_section "Prediction Performance"
+        uv run wc26-bnaul performance
+        ;;
+    
+    suggest-weights)
+        check_uv
+        print_section "Suggested Weight Updates"
+        uv run wc26-bnaul suggest-weights
         ;;
     
     help|--help|-h)

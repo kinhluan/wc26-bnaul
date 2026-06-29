@@ -4,12 +4,14 @@ wc26-bnaul — ClawCup Agent for FIFA World Cup 2026
 AI agent dự đoán kết quả World Cup 2026 qua ClawCup API
 
 Commands:
-    me          Show agent info
-    fixtures    List matches (--status open/closed/all)
-    predict     Submit a prediction
-    mine        Show my predictions
-    check       Check all predictions vs fixtures
-    fifa-data   Fetch FIFA data from external APIs
+    me              Show agent info
+    fixtures        List matches (--status open/closed/all)
+    predict         Submit a prediction
+    mine            Show my predictions
+    check           Check all predictions vs fixtures
+    fifa-data       Fetch FIFA data from external APIs
+    performance     Show prediction performance & logs
+    suggest-weights Suggest new ensemble weights based on history
 """
 
 import argparse
@@ -118,7 +120,7 @@ def cmd_fixtures(status: str = "open"):
 
 
 def cmd_predict(match_id: str, pick: str, reasoning: str, exact_score: str = None, probabilities: list = None, binary: bool = False):
-    """Gửi dự đoán."""
+    """Gửi dự đoán và log lại."""
     payload = {"match_id": match_id, "reasoning": reasoning}
     if pick:
         payload["pick"] = pick
@@ -132,6 +134,22 @@ def cmd_predict(match_id: str, pick: str, reasoning: str, exact_score: str = Non
     print(f"Submitting prediction for {match_id}...")
     data = api_request("POST", "/predictions", payload)
     print(json.dumps(data, indent=2, ensure_ascii=False))
+    
+    # Log the prediction
+    try:
+        from .prediction_logger import PredictionLogger
+        logger = PredictionLogger()
+        logger.log_prediction(
+            match_id=match_id,
+            home_team="",
+            away_team="",
+            submitted_probs=probabilities or ([1.0, 0.0] if pick == "HOME" else [0.0, 1.0] if pick == "AWAY" else [0.5, 0.5]),
+            components={},
+            predicted_score=exact_score or "",
+            reasoning=reasoning,
+        )
+    except Exception as e:
+        print(f"Warning: Could not log prediction: {e}", file=sys.stderr)
 
 
 def cmd_mine():
@@ -466,6 +484,20 @@ def cmd_backtest_demo():
     print("=" * 70)
 
 
+def cmd_performance():
+    """Show prediction performance from logs."""
+    from .prediction_logger import PredictionLogger
+    logger = PredictionLogger()
+    logger.print_performance()
+
+
+def cmd_suggest_weights():
+    """Suggest new ensemble weights based on historical performance."""
+    from .prediction_logger import PredictionLogger
+    logger = PredictionLogger()
+    logger.print_weight_suggestions()
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="wc26-bnaul",
@@ -543,6 +575,12 @@ def main():
     # backtest-demo
     sub.add_parser("backtest-demo", help="Run historical backtest demo")
 
+    # performance
+    sub.add_parser("performance", help="Show prediction performance & logs")
+
+    # suggest-weights
+    sub.add_parser("suggest-weights", help="Suggest new ensemble weights based on history")
+
     args = parser.parse_args()
 
     if args.command == "me":
@@ -559,6 +597,10 @@ def main():
         cmd_strategy_demo()
     elif args.command == "backtest-demo":
         cmd_backtest_demo()
+    elif args.command == "performance":
+        cmd_performance()
+    elif args.command == "suggest-weights":
+        cmd_suggest_weights()
     elif args.command == "predict":
         if args.auto:
             # Auto-generate prediction from provided parameters

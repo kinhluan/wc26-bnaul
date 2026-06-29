@@ -27,6 +27,10 @@ if os.path.exists(env_path):
 
 from wc26_bnaul import api_request
 from wc26_bnaul.ensemble_predictor import EnsemblePredictor
+from wc26_bnaul.prediction_logger import PredictionLogger
+
+# Initialize logger
+logger = PredictionLogger()
 
 
 # Team data database (FIFA rank, xG, xGA, typical form)
@@ -152,8 +156,10 @@ def predict_match(match_id: str, home: str, away: str, predictor: EnsemblePredic
     }
 
 
-def submit_prediction(match_id: str, home_prob: float, away_prob: float, score: str, dry_run: bool):
-    """Submit prediction to ClawCup API."""
+def submit_prediction(match_id: str, home_prob: float, away_prob: float, score: str, 
+                       dry_run: bool, home: str = "", away: str = "", 
+                       components: dict = None, round_name: str = "", weight: float = 1.0):
+    """Submit prediction to ClawCup API and log it."""
     if dry_run:
         print(f"  🚫 DRY RUN — Would submit: {match_id} — {home_prob:.2f} / {away_prob:.2f}")
         return True
@@ -165,6 +171,20 @@ def submit_prediction(match_id: str, home_prob: float, away_prob: float, score: 
             "score": score,
         })
         print(f"  ✅ Submitted: {match_id}")
+        
+        # Log the prediction
+        logger.log_prediction(
+            match_id=match_id,
+            home_team=home,
+            away_team=away,
+            submitted_probs=[round(home_prob, 2), round(away_prob, 2)],
+            components=components or {},
+            predicted_score=score,
+            reasoning="Ensemble model: xG + Elo + Betting + Form + H2H + Injury",
+            round_name=round_name,
+            weight=weight,
+        )
+        
         return True
     except Exception as e:
         print(f"  ❌ Failed: {match_id} — {e}")
@@ -236,6 +256,11 @@ def main():
             pred["away_prob"],
             pred["score"],
             dry_run,
+            home=home,
+            away=away,
+            components=pred.get("components", {}),
+            round_name=match.get("round", ""),
+            weight=match.get("weight", 1.0),
         )
         
         results.append({
