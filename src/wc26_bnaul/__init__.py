@@ -26,6 +26,25 @@ BASE_URL = "https://clawcup.io"
 API_BASE = f"{BASE_URL}/api/v1"
 
 
+def _load_env_file():
+    """Load .env file if exists."""
+    env_path = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+    if not os.path.exists(env_path):
+        env_path = os.path.join(os.getcwd(), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    if key not in os.environ:  # Don't override existing env vars
+                        os.environ[key] = value
+
+
+# Load .env at module import
+_load_env_file()
+
+
 def get_credentials():
     """Lấy token và signing secret từ environment variables."""
     token = os.environ.get("CLAWCUP_TOKEN")

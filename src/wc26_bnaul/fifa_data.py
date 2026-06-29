@@ -29,6 +29,15 @@ from datetime import datetime, timezone
 # =============================================================================
 
 # API Keys - set via environment variables
+# Note: Module-level import captures env at import time.
+# Use get_api_key() functions for runtime access.
+def _get_football_data_key():
+    return os.environ.get("FOOTBALL_DATA_API_KEY", "")
+
+def _get_api_football_key():
+    return os.environ.get("API_FOOTBALL_KEY", "")
+
+# Keep for backward compatibility
 FOOTBALL_DATA_API_KEY = os.environ.get("FOOTBALL_DATA_API_KEY", "")
 API_FOOTBALL_KEY = os.environ.get("API_FOOTBALL_KEY", "")
 
@@ -78,9 +87,13 @@ def _football_data_request(endpoint: str) -> dict:
     """Make authenticated request to football-data.org."""
     _rate_limit_football_data()
     
+    api_key = _get_football_data_key()
+    if not api_key:
+        raise RuntimeError("FOOTBALL_DATA_API_KEY not set. Get one at https://www.football-data.org/")
+    
     url = f"{FOOTBALL_DATA_BASE}/{endpoint}"
     headers = {
-        "X-Auth-Token": FOOTBALL_DATA_API_KEY,
+        "X-Auth-Token": api_key,
         "Accept": "application/json",
     }
     
@@ -133,6 +146,10 @@ def _api_football_request(endpoint: str, params: dict = None) -> dict:
     """Make authenticated request to API-Football."""
     _rate_limit_api_football()
     
+    api_key = _get_api_football_key()
+    if not api_key:
+        raise RuntimeError("API_FOOTBALL_KEY not set. Get one at https://rapidapi.com/api-sports/api/api-football")
+    
     # Build URL with query params
     query = ""
     if params:
@@ -140,7 +157,7 @@ def _api_football_request(endpoint: str, params: dict = None) -> dict:
     
     url = f"{API_FOOTBALL_BASE}/{endpoint}{query}"
     headers = {
-        "x-apisports-key": API_FOOTBALL_KEY,
+        "x-apisports-key": api_key,
         "Accept": "application/json",
     }
     
