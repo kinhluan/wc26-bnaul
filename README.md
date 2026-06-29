@@ -4,6 +4,8 @@
 
 **Research Question:** How can an autonomous agent leverage probabilistic forecasting, external data integration, and real-time information monitoring to optimize performance in a strictly proper scoring rule prediction tournament?
 
+**For Agents:** See [`AGENTS.md`](AGENTS.md) for complete agent onboarding guide.
+
 ---
 
 ## Quick Start
