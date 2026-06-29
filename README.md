@@ -58,39 +58,59 @@ wc26-bnaul/
 │   ├── FIFA_DATA_SOURCES.md          # FIFA data API research
 │   ├── FINDINGS.md                   # Key research findings
 │   └── LESSONS_LEARNED.md            # Lessons and insights
-├── tests/                        # Unit tests (planned)
+├── tests/                        # Unit tests (25 tests)
+│   ├── __init__.py
+│   └── test_core.py             # Test suite: HMAC, strategy, predictor, credentials
 ├── pyproject.toml               # uv project configuration
-└── uv.lock                      # Dependency lock file
+├── uv.lock                      # Dependency lock file
+├── .env                         # Environment variables (not in git)
+├── .gitignore
+└── README.md                    # This file
 ```
 
 ---
 
 ## 4. Quick Start
 
-### 4.1 Installation
+### 4.1 Prerequisites
+
+- **Python** >= 3.12
+- **uv** — the fast Python package manager ([install guide](https://docs.astral.sh/uv/getting-started/installation/))
+
+### 4.2 Installation
 
 ```bash
 # Clone repository
 git clone https://github.com/kinhluan/wc26-bnaul.git
 cd wc26-bnaul
 
-# Setup with uv
+# Create virtual environment and install dependencies
 uv sync
 ```
 
-### 4.2 Configuration
+### 4.3 Configuration
+
+Create a `.env` file in the project root (or export variables):
 
 ```bash
 # Required: ClawCup API credentials
-export CLAWCUP_TOKEN="wca_..."
-export CLAWCUP_SIGNING_SECRET="wca_sec_..."
+CLAWCUP_TOKEN="wca_..."
+CLAWCUP_SIGNING_SECRET="wca_sec_..."
 
 # Optional: External data APIs
-export FOOTBALL_DATA_API_KEY="your_key"    # football-data.org
-export API_FOOTBALL_KEY="your_key"          # API-Football (RapidAPI)
+FOOTBALL_DATA_API_KEY="your_key"    # football-data.org
+API_FOOTBALL_KEY="your_key"          # API-Football (RapidAPI)
 ```
 
-### 4.3 CLI Usage
+> **Note:** The agent auto-loads `.env` at startup. No manual `source` needed.
+
+---
+
+## 5. CLI Usage (via `uv run`)
+
+All commands are run through `uv run`, which uses the project's virtual environment automatically.
+
+### 5.1 Agent Commands
 
 ```bash
 # Agent info
@@ -116,16 +136,57 @@ uv run wc26-bnaul check
 
 # Fetch FIFA data
 uv run wc26-bnaul fifa-data --source api-football --live
+```
+
+### 5.2 Model & Strategy Commands
+
+```bash
+# Run prediction model on a match
+uv run wc26-bnaul predict-model BRAZIL JAPAN \
+  --fifa-rank-home 6 --fifa-rank-away 18 \
+  --form-home 4 --form-away 3
+
+# Run strategy demonstration
+uv run wc26-bnaul strategy-demo
+
+# Run backtest demonstration
+uv run wc26-bnaul backtest-demo
+```
+
+### 5.3 Development Commands
+
+```bash
+# Run tests
+uv run pytest tests/
+
+# Run specific test
+uv run pytest tests/test_core.py -v
 
 # Run news monitor (with FIFA data integration)
 uv run python -m wc26_bnaul.news_monitor --fifa-data
+
+# Run in dry-run mode (no actual API calls)
+uv run python -m wc26_bnaul.news_monitor --dry-run
 ```
+
+### 5.4 Alternative: `python -m`
+
+If you prefer not to use the `wc26-bnaul` entry point:
+
+```bash
+# Ensure you're in the project root with uv environment activated
+uv run python -m wc26_bnaul me
+uv run python -m wc26_bnaul fixtures
+uv run python -m wc26_bnaul check
+```
+
+> **Note:** `python3 -m wc26-bnaul` (with a hyphen) does **not** work because Python module names cannot contain hyphens. Use `python -m wc26_bnaul` (with underscore) or the `uv run wc26-bnaul` entry point.
 
 ---
 
-## 5. Core Components
+## 6. Core Components
 
-### 5.1 Prediction Model (`predictor.py`)
+### 6.1 Prediction Model (`predictor.py`)
 
 A multi-factor probabilistic model combining:
 
@@ -142,7 +203,7 @@ A multi-factor probabilistic model combining:
 
 **Output:** 3-way probabilities (home win / draw / away win) with confidence score and expected goals.
 
-### 5.2 FIFA Data Integration (`fifa_data.py`)
+### 6.2 FIFA Data Integration (`fifa_data.py`)
 
 | API | Free Tier | Data Provided |
 |-----|-----------|---------------|
@@ -151,7 +212,7 @@ A multi-factor probabilistic model combining:
 | **FIFA Training Centre** | Free PDFs | EFI (Enhanced Football Intelligence) post-match |
 | **StatsBomb Open Data** | GitHub dataset | Event-level data with xG (WC 2022) |
 
-### 5.3 News Monitor (`news_monitor.py`)
+### 6.3 News Monitor (`news_monitor.py`)
 
 Automated monitoring workflow:
 
@@ -161,7 +222,7 @@ Automated monitoring workflow:
 4. **Resubmit decision:** Adjust probabilities if material information emerges
 5. **HMAC-signed submission:** Secure API communication with ClawCup
 
-### 5.4 Strategy Framework (`strategy.py`)
+### 6.4 Strategy Framework (`strategy.py`)
 
 Mathematical foundations:
 
@@ -171,9 +232,9 @@ Mathematical foundations:
 
 ---
 
-## 6. Key Research Findings
+## 7. Key Research Findings
 
-### 6.1 Mathematical Results
+### 7.1 Mathematical Results
 
 | Finding | Evidence | Implication |
 |---------|----------|-------------|
@@ -183,7 +244,7 @@ Mathematical foundations:
 | **Over-confidence punished** | Max-confident: -24.52% skill | Avoid extreme probabilities unless certain |
 | **Bookmaker ≠ ClawCup** | Different incentive structures | Don't copy betting odds directly |
 
-### 6.2 Empirical Validation
+### 7.2 Empirical Validation
 
 Monte Carlo simulation results (10,000 runs, 15 matches, 3 rounds):
 
@@ -193,7 +254,7 @@ Monte Carlo simulation results (10,000 runs, 15 matches, 3 rounds):
 | Over-confident | 16.00% | 14.8% | [-13.0%, 45.0%] |
 | Max-confident | **-24.52%** | 18.4% | [-60.6%, 11.6%] |
 
-### 6.3 Historical Backtest
+### 7.3 Historical Backtest
 
 45 World Cup knockout matches (2014, 2018, 2022):
 
@@ -207,7 +268,7 @@ Monte Carlo simulation results (10,000 runs, 15 matches, 3 rounds):
 
 ---
 
-## 7. Documentation
+## 8. Documentation
 
 | Document | Content |
 |----------|---------|
@@ -221,9 +282,9 @@ Monte Carlo simulation results (10,000 runs, 15 matches, 3 rounds):
 
 ---
 
-## 8. Research Methodology
+## 9. Research Methodology
 
-### 8.1 Experimental Design
+### 9.1 Experimental Design
 
 We follow the **MLOps experimental protocol** (Sculley et al., 2015) adapted for prediction tournaments:
 
@@ -232,7 +293,7 @@ We follow the **MLOps experimental protocol** (Sculley et al., 2015) adapted for
 3. **Metrics:** Mean skill percentage, standard deviation, 95% confidence interval
 4. **Validation:** 10,000-run Monte Carlo with bootstrapped confidence intervals
 
-### 8.2 Data Sources
+### 9.2 Data Sources
 
 | Source | Type | Coverage | License |
 |--------|------|----------|---------|
@@ -242,7 +303,7 @@ We follow the **MLOps experimental protocol** (Sculley et al., 2015) adapted for
 | StatsBomb Open Data | Event-level + xG | WC 2022 | CC BY 4.0 |
 | API-Football | Real-time API | 1,200+ leagues | Commercial |
 
-### 8.3 Limitations
+### 9.3 Limitations
 
 1. **Hindsight bias in backtest:** Historical "true" probabilities are post-hoc estimates
 2. **External API dependency:** Real-time data requires paid API keys for production use
@@ -251,7 +312,7 @@ We follow the **MLOps experimental protocol** (Sculley et al., 2015) adapted for
 
 ---
 
-## 9. Future Work
+## 10. Future Work
 
 1. **Weight Calibration:** Grid search optimal weights on historical data
 2. **Live Model:** Real-time prediction adjustment during matches
@@ -261,7 +322,7 @@ We follow the **MLOps experimental protocol** (Sculley et al., 2015) adapted for
 
 ---
 
-## 10. Citation
+## 11. Citation
 
 If you use this project for research, please cite:
 
@@ -283,7 +344,7 @@ If you use this project for research, please cite:
 
 ---
 
-## 11. License
+## 12. License
 
 **MIT License** — For educational and research purposes.
 
