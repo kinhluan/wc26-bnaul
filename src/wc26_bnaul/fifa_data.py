@@ -3,7 +3,7 @@ FIFA Data Integration Module for wc26-bnaul
 
 Tích hợp dữ liệu từ:
 - football-data.org (free tier)
-- API-Football (via RapidAPI)
+- Free API Live Football Data (via RapidAPI) — key của bạn
 - FIFA Training Centre (PDF scraping)
 - StatsBomb Open Data (offline dataset)
 
@@ -28,22 +28,26 @@ from datetime import datetime, timezone
 # CONFIGURATION
 # =============================================================================
 
-# API Keys - set via environment variables
-# Note: Module-level import captures env at import time.
-# Use get_api_key() functions for runtime access.
 def _get_football_data_key():
     return os.environ.get("FOOTBALL_DATA_API_KEY", "")
 
 def _get_api_football_key():
     return os.environ.get("API_FOOTBALL_KEY", "")
 
+def _get_wc2026_live_key():
+    return os.environ.get("WC2026_LIVE_API_KEY", "")
+
 # Keep for backward compatibility
 FOOTBALL_DATA_API_KEY = os.environ.get("FOOTBALL_DATA_API_KEY", "")
 API_FOOTBALL_KEY = os.environ.get("API_FOOTBALL_KEY", "")
+WC2026_LIVE_API_KEY = os.environ.get("WC2026_LIVE_API_KEY", "")
 
 # Base URLs
 FOOTBALL_DATA_BASE = "https://api.football-data.org/v4"
-API_FOOTBALL_BASE = "https://v3.football.api-sports.io"
+# Updated: use free-api-live-football-data (your RapidAPI key)
+API_FOOTBALL_BASE = "https://free-api-live-football-data.p.rapidapi.com"
+# World Cup 2026 Live API
+WC2026_LIVE_BASE = "https://world-cup-2026-live-api.p.rapidapi.com"
 
 # World Cup IDs
 WC_COMPETITION_ID = "WC"  # football-data.org
@@ -157,7 +161,8 @@ def _api_football_request(endpoint: str, params: dict = None) -> dict:
     
     url = f"{API_FOOTBALL_BASE}/{endpoint}{query}"
     headers = {
-        "x-apisports-key": api_key,
+        "x-rapidapi-key": api_key,
+        "x-rapidapi-host": "free-api-live-football-data.p.rapidapi.com",
         "Accept": "application/json",
     }
     
@@ -265,6 +270,59 @@ def get_head_to_head_api_football(team_a: int, team_b: int) -> List[Dict]:
     """Get head-to-head history between two teams."""
     data = _api_football_request("fixtures/headtohead", {"h2h": f"{team_a}-{team_b}"})
     return data.get("response", [])
+
+
+# =============================================================================
+# World Cup 2026 Live API (via RapidAPI)
+# =============================================================================
+
+def _wc2026_live_request(endpoint: str) -> dict:
+    """Make authenticated request to World Cup 2026 Live API."""
+    api_key = _get_wc2026_live_key()
+    if not api_key:
+        raise RuntimeError("WC2026_LIVE_API_KEY not set. Get one at https://rapidapi.com/world-cup-2026-live-api")
+    
+    url = f"{WC2026_LIVE_BASE}/{endpoint}"
+    headers = {
+        "x-rapidapi-key": api_key,
+        "x-rapidapi-host": "world-cup-2026-live-api.p.rapidapi.com",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    
+    req = urllib.request.Request(url, headers=headers, method="GET")
+    
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode()
+        # Return error info instead of raising, so caller can handle "not subscribed"
+        return {"error": True, "status": e.code, "message": error_body}
+
+
+def get_wc2026_match_detail(match_id: str) -> Dict:
+    """
+    Get detailed match info from World Cup 2026 Live API.
+    
+    Args:
+        match_id: Match ID (e.g., '07c3e7d4f03b')
+    
+    Returns:
+        Match details including teams, score, events, stats
+    """
+    return _wc2026_live_request(f"wc/match/{match_id}/detail")
+
+
+def get_wc2026_matches() -> List[Dict]:
+    """Get all World Cup 2026 matches."""
+    data = _wc2026_live_request("wc/matches")
+    return data.get("response", []) if not data.get("error") else []
+
+
+def get_wc2026_standings() -> Dict:
+    """Get World Cup 2026 group standings."""
+    return _wc2026_live_request("wc/standings")
 
 
 # =============================================================================
