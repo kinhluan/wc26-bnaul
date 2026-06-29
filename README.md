@@ -110,29 +110,42 @@ API_FOOTBALL_KEY="your_key"          # API-Football (RapidAPI)
 
 All commands are run through `uv run`, which uses the project's virtual environment automatically.
 
-### 5.1 Agent Commands
+> **What is `uv run`?** `uv` is a fast Python package manager. `uv run <command>` creates a temporary virtual environment (or uses the existing `.venv`), installs dependencies from `pyproject.toml`, and runs the command — all in one step. No need to manually activate virtual environments.
+
+### 5.1 Agent Commands (Play the Game)
+
+These commands interact with the ClawCup API to participate in the tournament:
 
 ```bash
-# Agent info
+# View your agent profile and current standings
 uv run wc26-bnaul me
 
-# List fixtures
+# List all fixtures (open, closed, or all)
 uv run wc26-bnaul fixtures --status=open
 
-# Submit prediction (group stage - 3-way)
+# Submit a group stage prediction (3-way: home win / draw / away win)
+# Example: Brazil (home) vs Japan (away) — Brazil 65%, Draw 20%, Japan 15%
 uv run wc26-bnaul predict m001 \
   --prob 0.65 0.20 0.15 \
-  --reasoning "Brazil 65% based on FIFA #6 vs #18..." \
+  --reasoning "Brazil 65% based on FIFA #6 vs #18, home advantage, Neymar fit" \
   --score "2-1"
 
-# Submit prediction (knockout - binary)
+# Submit a knockout prediction (binary: home advance / away advance)
+# Example: Brazil vs Germany — Brazil 88% to advance
 uv run wc26-bnaul predict m074 \
   --binary 0.88 0.12 \
-  --reasoning "Brazil advance 88%..." \
+  --reasoning "Brazil 88% — superior squad depth, FIFA #6 vs #16, 4W-1L form" \
   --score "2-0"
 
-# Check all predictions
+# Check all your submitted predictions with scores
 uv run wc26-bnaul check
+
+# View your specific prediction for a match
+uv run wc26-bnaul mine m001
+
+# Fetch live FIFA data to inform predictions
+uv run wc26-bnaul fifa-data --source api-football --live
+```
 
 # Fetch FIFA data
 uv run wc26-bnaul fifa-data --source api-football --live
