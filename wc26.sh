@@ -270,10 +270,48 @@ except Exception as e:
     uv run python -m wc26_bnaul.news_monitor_real --check "$match_id" --dry-run
     echo ""
     
-    # Step 3: Run prediction model
-    print_section "Step 3/4: Run Prediction Model"
-    print_info "Running: predict-model $home $away"
-    uv run wc26-bnaul predict-model "$home" "$away" --fifa-rank-home 6 --fifa-rank-away 18 --form-home 4 --form-away 3
+    # Step 3: Run ensemble prediction model
+    print_section "Step 3/4: Run Ensemble Prediction Model"
+    print_info "Running: ensemble predictor with xG + betting + form + injuries"
+    
+    # Run ensemble model with realistic inputs
+    uv run python -c "
+import sys
+sys.path.insert(0, 'src')
+from wc26_bnaul.ensemble_predictor import EnsemblePredictor
+
+predictor = EnsemblePredictor()
+result = predictor.predict(
+    home_team='$home',
+    away_team='$away',
+    home_rank=6,
+    away_rank=18,
+    home_xg=2.1,
+    home_xga=0.8,
+    away_xg=1.2,
+    away_xga=1.3,
+    betting_home_prob=0.72,
+    betting_away_prob=0.28,
+    home_form=[1, 1, 0, 1, 1],
+    away_form=[1, 0, 0, 1, 1],
+    h2h_home_wins=7,
+    h2h_draws=2,
+    h2h_away_wins=1,
+    home_injuries=0,
+    away_injuries=0,
+    knockout=True,
+)
+
+print(f'Home win: {result.home_win_prob:.0%}')
+print(f'Draw: {result.draw_prob:.0%}')
+print(f'Away win: {result.away_win_prob:.0%}')
+print(f'Expected score: {result.most_likely_score}')
+print(f'Confidence: {result.confidence:.0%}')
+print(f'Components: {result.ensemble_components}')
+
+binary = result.to_binary()
+print(f'Binary: Home {binary[0]:.2f}, Away {binary[1]:.2f}')
+"
     echo ""
     
     # Step 4: Prompt for submission

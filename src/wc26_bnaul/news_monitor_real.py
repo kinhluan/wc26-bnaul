@@ -39,6 +39,31 @@ from wc26_bnaul.fifa_data import (
 # CONFIGURATION
 # =============================================================================
 
+# Load .env at module level (same as __init__.py)
+_env_loaded = False
+
+def _load_env():
+    global _env_loaded
+    if _env_loaded:
+        return
+    env_path = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+    if not os.path.exists(env_path):
+        env_path = os.path.join(os.getcwd(), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    key = key.strip()
+                    # Strip quotes and comments
+                    value = value.strip().split()[0].strip('"').strip("'")
+                    if key not in os.environ:
+                        os.environ[key] = value
+    _env_loaded = True
+
+_load_env()
+
 NEWSAPI_KEY = os.environ.get("NEWSAPI_KEY", "")
 NEWSAPI_BASE = "https://newsapi.org/v2"
 
