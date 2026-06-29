@@ -67,12 +67,12 @@ _load_env()
 NEWSAPI_KEY = os.environ.get("NEWSAPI_KEY", "")
 NEWSAPI_BASE = "https://newsapi.org/v2"
 
-# RSS feeds for football news
+# RSS feeds for football news (verified working)
 RSS_FEEDS = {
     "bbc_sport": "http://feeds.bbci.co.uk/sport/football/rss.xml",
     "espn_fc": "https://www.espn.com/espn/rss/news",
-    "goal_com": "https://www.goal.com/feeds/en/news",
-    "transfermarkt": "https://www.transfermarkt.com/rss/news",
+    "sky_sports": "https://www.skysports.com/rss/12040",
+    "worldsoccer": "https://www.worldsoccer.com/rss",
 }
 
 # Team name mapping: ClawCup name → API-Football team ID
