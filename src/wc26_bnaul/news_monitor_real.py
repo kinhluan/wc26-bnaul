@@ -440,29 +440,14 @@ def get_team_id(team_name: str) -> Optional[int]:
 
 def fetch_injuries_for_match(home: str, away: str) -> Dict[str, List[Dict]]:
     """
-    Fetch injury reports for both teams from API-Football.
+    Fetch injury reports for both teams.
     
-    Returns:
-        {"home": [...], "away": [...]}
+    NOTE: API-Football free tier does not support injuries endpoint.
+    This function returns empty data and relies on news-based detection.
     """
-    if not _get_api_football_key():
-        print("  ⚠️  API_FOOTBALL_KEY not set. Injuries unavailable.")
-        return {"home": [], "away": []}
-    
-    home_id = get_team_id(home)
-    away_id = get_team_id(away)
-    
-    if not home_id or not away_id:
-        print(f"  ⚠️  Team ID not found: {home}={home_id}, {away}={away_id}")
-        return {"home": [], "away": []}
-    
-    try:
-        home_injuries = get_injuries_api_football(team=home_id)
-        away_injuries = get_injuries_api_football(team=away_id)
-        return {"home": home_injuries, "away": away_injuries}
-    except Exception as e:
-        print(f"  ⚠️  Injury API error: {e}")
-        return {"home": [], "away": []}
+    # API-Football free tier does not have /injuries endpoint
+    # Injury data comes from news monitoring (analyze_news_content)
+    return {"home": [], "away": []}
 
 
 def analyze_injury_impact(injuries: Dict[str, List[Dict]]) -> Dict:
@@ -552,6 +537,9 @@ def analyze_news_content(news_items: List[Dict], home: str, away: str) -> Dict:
     - Lineup, starting XI, formation change
     - Weather, pitch condition
     - Manager statement, tactical change
+    
+    NOTE: API-Football injury endpoint is not available on free tier.
+    This function uses news-based injury detection as primary source.
     
     Returns:
         {

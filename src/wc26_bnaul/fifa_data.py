@@ -216,15 +216,18 @@ def get_injuries_api_football(
     """
     Get injury reports.
     
+    NOTE: The free-api-live-football-data endpoint does NOT support /injuries.
+    This function will return empty list and log a warning.
+    
+    For injury data, use news monitoring (news_monitor_real.py) which detects
+    injury keywords from RSS feeds and NewsAPI.
+    
     Args:
         team: Filter by team ID (optional)
     """
-    params = {"league": league, "season": season}
-    if team:
-        params["team"] = team
-    
-    data = _api_football_request("injuries", params)
-    return data.get("response", [])
+    # Free tier does not support injuries endpoint
+    print("  ℹ️  Injury API not available on free tier. Using news-based injury detection.")
+    return []
 
 
 def get_match_predictions_api_football(fixture_id: int) -> Dict:
