@@ -12,3 +12,7 @@ wheels/
 # Secrets
 .env
 .env
+
+# Logs (keep directory but ignore contents)
+logs/*.jsonl
+logs/*.json
