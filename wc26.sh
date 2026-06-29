@@ -272,35 +272,34 @@ except Exception as e:
     uv run python -m wc26_bnaul.news_monitor_real --check "$match_id" --dry-run
     echo ""
     
-    # Step 3: Run ensemble prediction model
+    # Step 3: Run ensemble prediction model and capture output
     print_section "Step 3/4: Run Ensemble Prediction Model"
-    print_info "Running: ensemble predictor with xG + betting + form + injuries"
+    print_info "Running: ensemble predictor with xG + Elo + form + H2H + injuries"
     
-    # Run ensemble model with realistic inputs
-    uv run python -c "
+    # Run ensemble model and capture binary probabilities
+    local ensemble_output
+    ensemble_output=$(uv run python -c "
 import sys
 sys.path.insert(0, 'src')
 from wc26_bnaul.ensemble_predictor import EnsemblePredictor
+from wc26_bnaul.batch_predict import get_team_data
+
+# Get team data from database
+home_data = get_team_data('$home')
+away_data = get_team_data('$away')
 
 predictor = EnsemblePredictor()
 result = predictor.predict(
     home_team='$home',
     away_team='$away',
-    home_rank=6,
-    away_rank=18,
-    home_xg=2.1,
-    home_xga=0.8,
-    away_xg=1.2,
-    away_xga=1.3,
-    betting_home_prob=0.72,
-    betting_away_prob=0.28,
-    home_form=[1, 1, 0, 1, 1],
-    away_form=[1, 0, 0, 1, 1],
-    h2h_home_wins=7,
-    h2h_draws=2,
-    h2h_away_wins=1,
-    home_injuries=0,
-    away_injuries=0,
+    home_rank=home_data['rank'],
+    away_rank=away_data['rank'],
+    home_xg=home_data['xg'],
+    home_xga=home_data['xga'],
+    away_xg=away_data['xg'],
+    away_xga=away_data['xga'],
+    home_form=home_data['form'],
+    away_form=away_data['form'],
     knockout=True,
 )
 
@@ -312,46 +311,24 @@ print(f'Confidence: {result.confidence:.0%}')
 print(f'Components: {result.ensemble_components}')
 
 binary = result.to_binary()
-print(f'Binary: Home {binary[0]:.2f}, Away {binary[1]:.2f}')
-"
+print(f'BINARY_PROB:{binary[0]:.2f},{binary[1]:.2f}')
+print(f'SCORE:{result.most_likely_score}')
+")
+    
+    echo "$ensemble_output"
     echo ""
     
-    # Step 4: Prompt for submission
+    # Extract binary probabilities and score from output
+    local home_prob away_prob score
+    home_prob=$(echo "$ensemble_output" | grep "BINARY_PROB:" | sed 's/BINARY_PROB://' | cut -d',' -f1)
+    away_prob=$(echo "$ensemble_output" | grep "BINARY_PROB:" | sed 's/BINARY_PROB://' | cut -d',' -f2)
+    score=$(echo "$ensemble_output" | grep "SCORE:" | sed 's/SCORE://')
+    
+    # Step 4: Auto-submit with confirmation
     print_section "Step 4/4: Submit Prediction"
-    echo -n "Enter home win probability (e.g., 0.72): "
-    read -r home_prob
-    
-    # Validate probability
-    if ! [[ "$home_prob" =~ ^0\.[0-9]+$ ]] && ! [[ "$home_prob" =~ ^[0-9]\.[0-9]+$ ]]; then
-        print_error "Invalid probability: $home_prob"
-        exit 1
-    fi
-    
-    # Calculate away probability
-    away_prob=$(uv run python -c "print(f'{1 - float('$home_prob'):.2f}')")
-    
+    print_info "Auto-generated from ensemble model:"
     print_info "Home: $home_prob, Away: $away_prob"
-    echo ""
-    
-    # Prompt for reasoning and score
-    echo -n "Enter reasoning (or press Enter for auto): "
-    read -r reasoning
-    if [ -z "$reasoning" ]; then
-        reasoning="$home $home_prob vs $away $away_prob — auto-generated prediction"
-    fi
-    
-    echo -n "Enter score prediction (e.g., 2-1): "
-    read -r score
-    if [ -z "$score" ]; then
-        score="1-0"
-    fi
-    
-    echo ""
-    echo -e "${BOLD}Summary:${NC}"
-    echo "  Match: $match_id — $home vs $away"
-    echo "  Probability: $home_prob / $away_prob"
-    echo "  Reasoning: $reasoning"
-    echo "  Score: $score"
+    print_info "Score: $score"
     echo ""
     
     echo -n "Submit prediction? (yes/no/dry-run): "
@@ -360,13 +337,16 @@ print(f'Binary: Home {binary[0]:.2f}, Away {binary[1]:.2f}')
     case "$confirm" in
         yes|y)
             print_section "Submitting..."
+            local reasoning="Ensemble: xG+Elo+Form+H2H+Injury — $home $home_prob vs $away $away_prob"
             uv run wc26-bnaul predict "$match_id" --binary "$home_prob" "$away_prob" --reasoning "$reasoning" --score "$score"
             print_success "Prediction submitted!"
             ;;
         dry-run|d)
             print_section "Dry Run"
             print_info "Would submit:"
-            echo "  uv run wc26-bnaul predict $match_id --binary $home_prob $away_prob --reasoning '$reasoning' --score $score"
+            echo "  Match: $match_id — $home vs $away"
+            echo "  Probability: $home_prob / $away_prob"
+            echo "  Score: $score"
             ;;
         *)
             print_info "Cancelled"
