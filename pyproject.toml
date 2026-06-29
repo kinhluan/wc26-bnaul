@@ -1,0 +1,16 @@
+[project]
+name = "wc26-bnaul"
+version = "0.1.0"
+description = "ClawCup Agent — FIFA World Cup 2026 AI Predictor"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.31.0",
+]
+
+[project.scripts]
+wc26-bnaul = "wc26_bnaul:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
