@@ -99,7 +99,7 @@ $$P_{\text{Elo}}(\text{home}) = \frac{1}{1 + 10^{(\text{FIFA}_{\text{away}} - \t
 
 Implied probability from bookmakers (vig removed).
 
-$$\text{implied} = \frac{1}{\text{decimal\_odds}}$$
+$$\text{implied} = \frac{1}{\text{decimal odds}}$$
 
 $$P_{\text{bet}}(\text{home}) = \frac{\text{implied}_{\text{home}}}{\text{implied}_{\text{home}} + \text{implied}_{\text{away}}}$$
 
@@ -109,7 +109,7 @@ Bookmakers spend millions calibrating these — strong signal.
 
 Exponential decay weighting (recent matches weighted higher).
 
-$$\text{form\_score} = \sum_{i=1}^{5} w_i \times r_i$$
+$$\text{form score} = \sum_{i=1}^{5} w_i \times r_i$$
 
 $$\text{weights} = [0.35, 0.25, 0.20, 0.12, 0.08]$$
 
@@ -121,7 +121,7 @@ $$P_{\text{form}}(\text{home}) = \frac{\text{form}_{\text{home}}}{\text{form}_{\
 
 Historical matchup record.
 
-$$P_{\text{H2H}}(\text{home}) = \frac{\text{H2H}_{\text{home\_wins}} + 0.5 \times \text{H2H}_{\text{draws}}}{\text{total\_H2H}}$$
+$$P_{\text{H2H}}(\text{home}) = \frac{\text{H2H}_{\text{home wins}} + 0.5 \times \text{H2H}_{\text{draws}}}{\text{total H2H}}$$
 
 #### 6. Injury Adjustment — Weight: 10%
 
@@ -135,17 +135,17 @@ $$P_{\text{ensemble}} = \frac{P_{xG} \times 0.25 + P_{\text{Elo}} \times 0.20 + 
 
 **3-way probabilities:**
 
-$$P_{\text{home\_win}} = P_{\text{ensemble}} \times 0.75$$
+$$P_{\text{home win}} = P_{\text{ensemble}} \times 0.75$$
 
 $$P_{\text{draw}} = 0.20 \times (1 - |P_{\text{ensemble}} - 0.5| \times 2)$$
 
-$$P_{\text{away\_win}} = 1 - P_{\text{home\_win}} - P_{\text{draw}}$$
+$$P_{\text{away win}} = 1 - P_{\text{home win}} - P_{\text{draw}}$$
 
 **Knockout conversion (binary):**
 
-$$P_{\text{home\_advance}} = \frac{P_{\text{home\_win}} + P_{\text{draw}}}{P_{\text{home\_win}} + P_{\text{draw}} + P_{\text{away\_win}}}$$
+$$P_{\text{home advance}} = \frac{P_{\text{home win}} + P_{\text{draw}}}{P_{\text{home win}} + P_{\text{draw}} + P_{\text{away win}}}$$
 
-$$P_{\text{away\_advance}} = \frac{P_{\text{away\_win}}}{P_{\text{home\_win}} + P_{\text{draw}} + P_{\text{away\_win}}}$$
+$$P_{\text{away advance}} = \frac{P_{\text{away win}}}{P_{\text{home win}} + P_{\text{draw}} + P_{\text{away win}}}$$
 
 ### Monte Carlo Validation
 
