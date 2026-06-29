@@ -77,51 +77,52 @@ EOF
     fi
 }
 
-# Show main menu
-show_menu() {
+# Show interactive menu
+show_interactive_menu() {
     print_header
-    echo -e "${BOLD}Available Commands:${NC}\n"
+    echo -e "${BOLD}Select a command:${NC}\n"
     
-    echo -e "${GREEN}━━━ AGENT COMMANDS (Play the Game) ━━━${NC}"
-    echo -e "  ${BOLD}me${NC}                    Show agent info and standings"
-    echo -e "  ${BOLD}fixtures${NC}              List open fixtures"
-    echo -e "  ${BOLD}predict${NC} <match_id>   Submit prediction for a match"
-    echo -e "  ${BOLD}check${NC}                 Check all submitted predictions"
-    echo -e "  ${BOLD}mine${NC} <match_id>      View specific prediction"
-    echo -e "  ${BOLD}fifa-data${NC}             Fetch live FIFA data"
+    echo -e "${GREEN}[1]${NC} ${BOLD}me${NC}                    — Show agent info and standings"
+    echo -e "${GREEN}[2]${NC} ${BOLD}fixtures${NC}              — List open fixtures"
+    echo -e "${GREEN}[3]${NC} ${BOLD}predict${NC} <match_id>   — Submit prediction for a match"
+    echo -e "${GREEN}[4]${NC} ${BOLD}check${NC}                 — Check all submitted predictions"
+    echo -e "${GREEN}[5]${NC} ${BOLD}mine${NC} <match_id>      — View specific prediction"
+    echo -e "${GREEN}[6]${NC} ${BOLD}fifa-data${NC}             — Fetch live FIFA data"
     echo ""
     
-    echo -e "${YELLOW}━━━ ANALYSIS COMMANDS (Analyze Before Playing) ━━━${NC}"
-    echo -e "  ${BOLD}predict-model${NC} <home> <away>  Run prediction model"
-    echo -e "  ${BOLD}strategy-demo${NC}                  Show strategy demonstration"
-    echo -e "  ${BOLD}backtest-demo${NC}                  Run backtest demonstration"
+    echo -e "${YELLOW}[7]${NC}  ${BOLD}predict-model${NC} <home> <away>  — Run prediction model"
+    echo -e "${YELLOW}[8]${NC}  ${BOLD}strategy-demo${NC}                  — Show strategy demonstration"
+    echo -e "${YELLOW}[9]${NC}  ${BOLD}backtest-demo${NC}                  — Run backtest demonstration"
     echo ""
     
-    echo -e "${BLUE}━━━ MONITORING COMMANDS (Set and Forget) ━━━${NC}"
-    echo -e "  ${BOLD}monitor${NC}               Run news monitor (dry-run)"
-    echo -e "  ${BOLD}monitor-live${NC}          Run news monitor (live resubmit)"
-    echo -e "  ${BOLD}monitor-check${NC} <id>    Manual check specific match"
+    echo -e "${BLUE}[10]${NC} ${BOLD}monitor${NC}               — Run news monitor (dry-run)"
+    echo -e "${BLUE}[11]${NC} ${BOLD}monitor-live${NC}          — Run news monitor (live resubmit)"
+    echo -e "${BLUE}[12]${NC} ${BOLD}monitor-check${NC} <id>    — Manual check specific match"
     echo ""
     
-    echo -e "${CYAN}━━━ DEVELOPMENT COMMANDS ━━━${NC}"
-    echo -e "  ${BOLD}test${NC}                  Run all tests"
-    echo -e "  ${BOLD}test-v${NC}                Run tests with verbose output"
-    echo -e "  ${BOLD}sync${NC}                  Sync dependencies (uv sync)"
-    echo -e "  ${BOLD}shell${NC}                 Open uv shell"
+    echo -e "${CYAN}[13]${NC} ${BOLD}test${NC}                  — Run all tests"
+    echo -e "${CYAN}[14]${NC} ${BOLD}test-v${NC}                — Run tests with verbose output"
+    echo -e "${CYAN}[15]${NC} ${BOLD}sync${NC}                  — Sync dependencies (uv sync)"
+    echo -e "${CYAN}[16]${NC} ${BOLD}shell${NC}                 — Open uv shell"
     echo ""
     
-    echo -e "${MAGENTA}━━━ UTILITY COMMANDS ━━━${NC}"
-    echo -e "  ${BOLD}status${NC}                Show project status"
-    echo -e "  ${BOLD}env-check${NC}             Check environment setup"
-    echo -e "  ${BOLD}help${NC}                  Show this help message"
+    echo -e "${MAGENTA}[17]${NC} ${BOLD}status${NC}                — Show project status"
+    echo -e "${MAGENTA}[18]${NC} ${BOLD}env-check${NC}             — Check environment setup"
+    echo -e "${MAGENTA}[0]${NC}  ${BOLD}quit${NC}                  — Exit"
     echo ""
-    
-    echo -e "${BOLD}Examples:${NC}"
-    echo "  ./wc26.sh me"
-    echo "  ./wc26.sh predict m001 --prob 0.65 0.20 0.15"
-    echo "  ./wc26.sh predict-model BRAZIL JAPAN"
-    echo "  ./wc26.sh monitor"
+}
+
+# Show quick help
+show_quick_help() {
+    echo -e "${BOLD}Usage:${NC} ./wc26.sh [command] [options]"
     echo ""
+    echo -e "${GREEN}Agent:${NC} me, fixtures, predict <id>, check, mine <id>, fifa-data"
+    echo -e "${YELLOW}Analysis:${NC} predict-model <h> <a>, strategy-demo, backtest-demo"
+    echo -e "${BLUE}Monitor:${NC} monitor, monitor-live, monitor-check <id>"
+    echo -e "${CYAN}Dev:${NC} test, test-v, sync, shell"
+    echo -e "${MAGENTA}Utility:${NC} status, env-check, help"
+    echo ""
+    echo "Run without arguments for interactive menu."
 }
 
 # Show project status
@@ -210,8 +211,143 @@ env_check() {
     print_info "Run './wc26.sh status' for detailed status"
 }
 
+# Interactive mode
+run_interactive() {
+    while true; do
+        show_interactive_menu
+        echo -n "Enter choice [0-18]: "
+        read -r choice
+        
+        case "$choice" in
+            1)
+                check_uv
+                print_section "Agent Info"
+                uv run wc26-bnaul me
+                ;;
+            2)
+                check_uv
+                print_section "Open Fixtures"
+                uv run wc26-bnaul fixtures --status=open
+                ;;
+            3)
+                check_uv
+                echo -n "Enter match ID (e.g., m001): "
+                read -r match_id
+                echo -n "Enter probabilities (e.g., 0.65 0.20 0.15): "
+                read -r probs
+                echo -n "Enter reasoning: "
+                read -r reasoning
+                echo -n "Enter score prediction (e.g., 2-1): "
+                read -r score
+                print_section "Submit Prediction: $match_id"
+                uv run wc26-bnaul predict "$match_id" --prob $probs --reasoning "$reasoning" --score "$score"
+                ;;
+            4)
+                check_uv
+                print_section "My Predictions"
+                uv run wc26-bnaul check
+                ;;
+            5)
+                check_uv
+                echo -n "Enter match ID: "
+                read -r match_id
+                print_section "Prediction: $match_id"
+                uv run wc26-bnaul mine "$match_id"
+                ;;
+            6)
+                check_uv
+                print_section "FIFA Data"
+                uv run wc26-bnaul fifa-data --source api-football --live
+                ;;
+            7)
+                check_uv
+                echo -n "Enter home team (e.g., BRAZIL): "
+                read -r home
+                echo -n "Enter away team (e.g., JAPAN): "
+                read -r away
+                print_section "Prediction Model: $home vs $away"
+                uv run wc26-bnaul predict-model "$home" "$away" --fifa-rank-home 6 --fifa-rank-away 18 --form-home 4 --form-away 3
+                ;;
+            8)
+                check_uv
+                print_section "Strategy Demonstration"
+                uv run wc26-bnaul strategy-demo
+                ;;
+            9)
+                check_uv
+                print_section "Backtest Demonstration"
+                uv run wc26-bnaul backtest-demo
+                ;;
+            10)
+                check_uv
+                print_section "News Monitor (Dry Run)"
+                print_warning "This will check for news but NOT submit predictions"
+                print_info "Press Ctrl+C to stop"
+                echo ""
+                uv run python -m wc26_bnaul.news_monitor_real --dry-run --interval 300
+                ;;
+            11)
+                check_uv
+                print_section "News Monitor (LIVE)"
+                print_error "WARNING: This will actually resubmit predictions based on news!"
+                echo -n "Are you sure? (yes/no): "
+                read -r confirm
+                if [ "$confirm" = "yes" ]; then
+                    uv run python -m wc26_bnaul.news_monitor_real --interval 300
+                else
+                    print_info "Cancelled"
+                fi
+                ;;
+            12)
+                check_uv
+                echo -n "Enter match ID: "
+                read -r match_id
+                print_section "Manual Check: $match_id"
+                uv run python -m wc26_bnaul.news_monitor_real --check "$match_id" --dry-run
+                ;;
+            13)
+                check_uv
+                print_section "Running Tests"
+                uv run pytest tests/
+                ;;
+            14)
+                check_uv
+                print_section "Running Tests (Verbose)"
+                uv run pytest tests/ -v
+                ;;
+            15)
+                print_section "Syncing Dependencies"
+                uv sync
+                print_success "Dependencies synced"
+                ;;
+            16)
+                print_section "Opening uv Shell"
+                print_info "Type 'exit' to leave the shell"
+                uv run bash
+                ;;
+            17)
+                show_status
+                ;;
+            18)
+                env_check
+                ;;
+            0|q|quit|exit)
+                echo -e "\n${GREEN}Goodbye! 👋${NC}"
+                exit 0
+                ;;
+            *)
+                print_error "Invalid choice: $choice"
+                ;;
+        esac
+        
+        echo ""
+        echo -n "Press Enter to continue..."
+        read -r
+    done
+}
+
 # Main command dispatcher
-case "${1:-help}" in
+case "${1:-}" in
     me)
         check_uv
         print_section "Agent Info"
@@ -351,13 +487,18 @@ case "${1:-help}" in
         ;;
     
     help|--help|-h)
-        show_menu
+        show_quick_help
+        ;;
+    
+    "")
+        # No arguments — run interactive mode
+        run_interactive
         ;;
     
     *)
         print_error "Unknown command: $1"
         echo ""
-        show_menu
+        show_quick_help
         exit 1
         ;;
 esac
