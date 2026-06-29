@@ -151,38 +151,56 @@ uv run wc26-bnaul fifa-data --source api-football --live
 uv run wc26-bnaul fifa-data --source api-football --live
 ```
 
-### 5.2 Model & Strategy Commands
+### 5.2 Model & Strategy Commands (Analyze Before Playing)
+
+Run simulations and backtests to validate your strategy before submitting predictions:
 
 ```bash
-# Run prediction model on a match
+# Run prediction model on a match (dry-run, no API call)
+# Analyzes team strength and outputs probabilities
 uv run wc26-bnaul predict-model BRAZIL JAPAN \
   --fifa-rank-home 6 --fifa-rank-away 18 \
   --form-home 4 --form-away 3
 
 # Run strategy demonstration
+# Shows why truthful submission is optimal under Brier scoring
 uv run wc26-bnaul strategy-demo
 
 # Run backtest demonstration
+# Tests strategy on 45 historical World Cup matches
 uv run wc26-bnaul backtest-demo
 ```
 
-### 5.3 Development Commands
+### 5.3 Automated Monitoring (Set and Forget)
+
+Run the news monitor to automatically watch for updates and resubmit when needed:
 
 ```bash
-# Run tests
-uv run pytest tests/
-
-# Run specific test
-uv run pytest tests/test_core.py -v
-
-# Run news monitor (with FIFA data integration)
+# Run news monitor with FIFA data integration
+# Checks for injuries, lineup changes every 5 minutes
 uv run python -m wc26_bnaul.news_monitor --fifa-data
 
-# Run in dry-run mode (no actual API calls)
+# Dry-run mode: simulate without making actual API calls
 uv run python -m wc26_bnaul.news_monitor --dry-run
+
+# Custom check interval (e.g., every 10 minutes)
+uv run python -m wc26_bnaul.news_monitor --check-interval 600
 ```
 
-### 5.4 Alternative: `python -m`
+### 5.4 Development Commands
+
+```bash
+# Run all tests
+uv run pytest tests/
+
+# Run specific test with verbose output
+uv run pytest tests/test_core.py -v
+
+# Run a specific test class
+uv run pytest tests/test_core.py::TestHMACSigning -v
+```
+
+### 5.5 Alternative: `python -m`
 
 If you prefer not to use the `wc26-bnaul` entry point:
 
