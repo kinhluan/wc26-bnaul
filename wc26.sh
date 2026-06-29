@@ -100,6 +100,9 @@ show_interactive_menu() {
     echo -e "${BLUE}[12]${NC} ${BOLD}monitor-check${NC} <id>    — Manual check specific match"
     echo ""
     
+    echo -e "${RED}[19]${NC} ${BOLD}run${NC} <match_id>          — FULL PIPELINE: news → model → submit"
+    echo ""
+    
     echo -e "${CYAN}[13]${NC} ${BOLD}test${NC}                  — Run all tests"
     echo -e "${CYAN}[14]${NC} ${BOLD}test-v${NC}                — Run tests with verbose output"
     echo -e "${CYAN}[15]${NC} ${BOLD}sync${NC}                  — Sync dependencies (uv sync)"
@@ -121,6 +124,8 @@ show_quick_help() {
     echo -e "${BLUE}Monitor:${NC} monitor, monitor-live, monitor-check <id>"
     echo -e "${CYAN}Dev:${NC} test, test-v, sync, shell"
     echo -e "${MAGENTA}Utility:${NC} status, env-check, help"
+    echo ""
+    echo -e "${RED}Pipeline:${NC} run <match_id> — Full pipeline: news → model → submit"
     echo ""
     echo "Run without arguments for interactive menu."
 }
@@ -209,6 +214,124 @@ env_check() {
     
     print_success "Environment check passed"
     print_info "Run './wc26.sh status' for detailed status"
+}
+
+# Full pipeline: news → model → submit
+run_pipeline() {
+    local match_id="$1"
+    
+    if [ -z "$match_id" ]; then
+        print_error "Usage: ./wc26.sh run <match_id>"
+        echo ""
+        echo "Example:"
+        echo "  ./wc26.sh run m001"
+        exit 1
+    fi
+    
+    print_header
+    print_section "FULL PIPELINE: $match_id"
+    print_info "Steps: 1.Fetch News → 2.Run Model → 3.Analyze → 4.Submit"
+    echo ""
+    
+    # Step 1: Fetch match details
+    print_section "Step 1/4: Fetch Match Details"
+    local fixtures_json
+    fixtures_json=$(uv run python -c "
+import sys, json
+from wc26_bnaul import api_request
+try:
+    data = api_request('GET', '/fixtures?status=open')
+    matches = data.get('matches', [])
+    for m in matches:
+        if m['match_id'] == '$match_id':
+            print(json.dumps(m))
+            sys.exit(0)
+    print('{}')
+except Exception as e:
+    print('{}')
+" 2>/dev/null)
+    
+    if [ "$fixtures_json" = "{}" ] || [ -z "$fixtures_json" ]; then
+        print_error "Match $match_id not found or not open"
+        exit 1
+    fi
+    
+    local home away kickoff
+    home=$(echo "$fixtures_json" | uv run python -c "import sys, json; print(json.load(sys.stdin).get('home', 'UNKNOWN'))")
+    away=$(echo "$fixtures_json" | uv run python -c "import sys, json; print(json.load(sys.stdin).get('away', 'UNKNOWN'))")
+    kickoff=$(echo "$fixtures_json" | uv run python -c "import sys, json; print(json.load(sys.stdin).get('kickoff_utc', 'UNKNOWN'))")
+    
+    print_success "Match: $home vs $away"
+    print_info "Kickoff: $kickoff"
+    echo ""
+    
+    # Step 2: Check news & injuries
+    print_section "Step 2/4: Check News & Injuries"
+    uv run python -m wc26_bnaul.news_monitor_real --check "$match_id" --dry-run
+    echo ""
+    
+    # Step 3: Run prediction model
+    print_section "Step 3/4: Run Prediction Model"
+    print_info "Running: predict-model $home $away"
+    uv run wc26-bnaul predict-model "$home" "$away" --fifa-rank-home 6 --fifa-rank-away 18 --form-home 4 --form-away 3
+    echo ""
+    
+    # Step 4: Prompt for submission
+    print_section "Step 4/4: Submit Prediction"
+    echo -n "Enter home win probability (e.g., 0.72): "
+    read -r home_prob
+    
+    # Validate probability
+    if ! [[ "$home_prob" =~ ^0\.[0-9]+$ ]] && ! [[ "$home_prob" =~ ^[0-9]\.[0-9]+$ ]]; then
+        print_error "Invalid probability: $home_prob"
+        exit 1
+    fi
+    
+    # Calculate away probability
+    away_prob=$(uv run python -c "print(f'{1 - float('$home_prob'):.2f}')")
+    
+    print_info "Home: $home_prob, Away: $away_prob"
+    echo ""
+    
+    # Prompt for reasoning and score
+    echo -n "Enter reasoning (or press Enter for auto): "
+    read -r reasoning
+    if [ -z "$reasoning" ]; then
+        reasoning="$home $home_prob vs $away $away_prob — auto-generated prediction"
+    fi
+    
+    echo -n "Enter score prediction (e.g., 2-1): "
+    read -r score
+    if [ -z "$score" ]; then
+        score="1-0"
+    fi
+    
+    echo ""
+    echo -e "${BOLD}Summary:${NC}"
+    echo "  Match: $match_id — $home vs $away"
+    echo "  Probability: $home_prob / $away_prob"
+    echo "  Reasoning: $reasoning"
+    echo "  Score: $score"
+    echo ""
+    
+    echo -n "Submit prediction? (yes/no/dry-run): "
+    read -r confirm
+    
+    case "$confirm" in
+        yes|y)
+            print_section "Submitting..."
+            uv run wc26-bnaul predict "$match_id" --binary "$home_prob" "$away_prob" --reasoning "$reasoning" --score "$score"
+            print_success "Prediction submitted!"
+            ;;
+        dry-run|d)
+            print_section "Dry Run"
+            print_info "Would submit:"
+            echo "  uv run wc26-bnaul predict $match_id --binary $home_prob $away_prob --reasoning '$reasoning' --score $score"
+            ;;
+        *)
+            print_info "Cancelled"
+            ;;
+    esac
 }
 
 # Interactive mode
@@ -304,6 +427,12 @@ run_interactive() {
                 read -r match_id
                 print_section "Manual Check: $match_id"
                 uv run python -m wc26_bnaul.news_monitor_real --check "$match_id" --dry-run
+                ;;
+            19)
+                check_uv
+                echo -n "Enter match ID (e.g., m001): "
+                read -r match_id
+                run_pipeline "$match_id"
                 ;;
             13)
                 check_uv
@@ -452,6 +581,11 @@ case "${1:-}" in
         fi
         print_section "Manual Check: $2"
         uv run python -m wc26_bnaul.news_monitor_real --check "$2" --dry-run
+        ;;
+    
+    run)
+        check_uv
+        run_pipeline "$2"
         ;;
     
     test)
