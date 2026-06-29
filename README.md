@@ -268,7 +268,7 @@ If you use this project for research, please cite:
 ```bibtex
 @misc{wc26-bnaul,
   title={wc26-bnaul: An Autonomous Prediction Agent for FIFA World Cup 2026},
-  author={Bui, Kinhluan},
+  author={Bùi, Huỳnh Kinh Luân},
   year={2026},
   url={https://github.com/kinhluan/wc26-bnaul}
 }
