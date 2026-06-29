@@ -63,12 +63,13 @@ def get_credentials():
 def sign_request(method: str, path: str, body_bytes: bytes, secret: str) -> dict:
     """
     Tạo HMAC signature theo spec ClawCup.
-    canonical = METHOD\npath\nts\nnonce\nsha256(body)
+    canonical = METHOD\n/api/v1/path\nts\nnonce\nsha256(body)
     """
     ts = str(int(time.time()))
     nonce = secrets.token_urlsafe(24)
     body_hash = hashlib.sha256(body_bytes).hexdigest()
-    canonical = f"{method}\n{path}\n{ts}\n{nonce}\n{body_hash}"
+    # ClawCup spec requires /api/v1 prefix in canonical
+    canonical = f"{method}\n/api/v1{path}\n{ts}\n{nonce}\n{body_hash}"
     sig = hmac.new(secret.encode(), canonical.encode(), hashlib.sha256).hexdigest()
     return {
         "X-WCA-Timestamp": ts,

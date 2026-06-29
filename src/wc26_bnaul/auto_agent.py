@@ -131,6 +131,7 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
         try:
             api_request("POST", "/predictions", {
                 "match_id": match_id,
+                "format": "binary",
                 "p": [round(home_prob, 2), round(away_prob, 2)],
                 "reasoning": f"Auto-agent: {home} {home_prob:.0%} vs {away} {away_prob:.0%} — Ensemble(xG+Elo+Form+H2H) + News({news_analysis['severity']})",
                 "score": score,

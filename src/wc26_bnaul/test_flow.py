@@ -150,6 +150,7 @@ def analyze_and_decide(match_id: str, home: str, away: str, home_prob: float, aw
         try:
             api_request("POST", "/predictions", {
                 "match_id": match_id,
+                "format": "binary",
                 "p": [round(home_prob, 2), round(away_prob, 2)],
                 "reasoning": f"Auto-generated: {home} {home_prob:.0%} vs {away} {away_prob:.0%}",
                 "score": score,
