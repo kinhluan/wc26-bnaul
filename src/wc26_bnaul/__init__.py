@@ -131,6 +131,104 @@ def cmd_mine():
     print(json.dumps(data, indent=2, ensure_ascii=False))
 
 
+def cmd_check():
+    """Kiểm tra tất cả các trận đã dự đoán vs fixtures hiện tại."""
+    print("=== CHECK PREDICTIONS ===\n")
+    
+    # Lấy fixtures và predictions
+    fixtures_data = api_request("GET", "/fixtures?status=all")
+    predictions_data = api_request("GET", "/predictions/mine")
+    
+    matches = {m["match_id"]: m for m in fixtures_data.get("matches", [])}
+    predictions = predictions_data.get("predictions", []) if isinstance(predictions_data, dict) else predictions_data
+    
+    if not predictions:
+        print("No predictions found.")
+        return
+    
+    # Build lookup
+    pred_by_match = {}
+    for p in predictions:
+        mid = p.get("match_id") or p.get("match", {}).get("match_id")
+        if mid:
+            pred_by_match[mid] = p
+    
+    # Check each prediction
+    print(f"{'Match ID':<10} {'Home':<15} {'Away':<15} {'Status':<10} {'Kickoff (UTC)':<20} {'Predicted?':<12} {'Type':<10}")
+    print("-" * 100)
+    
+    for mid, pred in sorted(pred_by_match.items()):
+        match = matches.get(mid, {})
+        home = match.get("home", "?")
+        away = match.get("away", "?")
+        status = match.get("status", "?")
+        kickoff = match.get("kickoff_utc", "N/A")
+        
+        # Determine prediction type
+        pred_type = "pick"
+        if "p" in pred or "probabilities" in pred:
+            probs = pred.get("p") or pred.get("probabilities")
+            if probs:
+                if len(probs) == 2:
+                    pred_type = "binary"
+                else:
+                    pred_type = "prob"
+        elif "pick" in pred:
+            pred_type = "pick"
+        
+        print(f"{mid:<10} {home:<15} {away:<15} {status:<10} {kickoff:<20} {'✅ YES':<12} {pred_type:<10}")
+    
+    # Check for missing predictions
+    print("\n--- UNPREDICTED MATCHES ---")
+    unpred = [m for mid, m in matches.items() if mid not in pred_by_match and m.get("status") == "open"]
+    if unpred:
+        print(f"{'Match ID':<10} {'Home':<15} {'Away':<15} {'Kickoff (UTC)':<20}")
+        print("-" * 65)
+        for m in sorted(unpred, key=lambda x: x.get("kickoff_utc", "")):
+            print(f"{m['match_id']:<10} {m.get('home','?'):<15} {m.get('away','?'):<15} {m.get('kickoff_utc','N/A'):<20}")
+    else:
+        print("All open matches have been predicted! ✅")
+    
+    # Summary
+    total_pred = len(pred_by_match)
+    total_open = len([m for m in matches.values() if m.get("status") == "open"])
+    total_closed = len([m for m in matches.values() if m.get("status") == "closed"])
+    
+    print(f"\n=== SUMMARY ===")
+    print(f"Total predictions submitted: {total_pred}")
+    print(f"Open matches: {total_open}")
+    print(f"Closed matches: {total_closed}")
+    print(f"Unpredicted open matches: {len(unpred)}")
+    
+    # Show prediction details
+    print(f"\n=== PREDICTION DETAILS ===")
+    for mid, pred in sorted(pred_by_match.items()):
+        match = matches.get(mid, {})
+        home = match.get("home", "?")
+        away = match.get("away", "?")
+        print(f"\n{mid}: {home} vs {away}")
+        
+        probs = pred.get("p") or pred.get("probabilities")
+        if probs:
+            if len(probs) == 3:
+                print(f"  Probabilities: Home={probs[0]:.2%}, Draw={probs[1]:.2%}, Away={probs[2]:.2%}")
+            elif len(probs) == 2:
+                print(f"  Binary: Home={probs[0]:.2%}, Away={probs[1]:.2%}")
+        
+        pick = pred.get("pick")
+        if pick:
+            print(f"  Pick: {pick}")
+        
+        score = pred.get("exact_score")
+        if score:
+            print(f"  Exact score: {score}")
+        
+        reasoning = pred.get("reasoning", "")
+        if reasoning:
+            preview = reasoning[:100] + "..." if len(reasoning) > 100 else reasoning
+            print(f"  Reasoning: {preview}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="wc26-bnaul",
@@ -159,12 +257,17 @@ def main():
     # mine
     sub.add_parser("mine", help="Show my predictions")
 
+    # check
+    sub.add_parser("check", help="Check all predictions vs fixtures")
+
     args = parser.parse_args()
 
     if args.command == "me":
         cmd_me()
     elif args.command == "fixtures":
         cmd_fixtures(args.status)
+    elif args.command == "check":
+        cmd_check()
     elif args.command == "predict":
         pick = args.pick
         probs = None
