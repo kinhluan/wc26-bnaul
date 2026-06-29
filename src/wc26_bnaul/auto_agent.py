@@ -126,29 +126,38 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
         return True
     
     print(f"🚀 SUBMITTING...")
-    try:
-        api_request("POST", f"/predictions/{match_id}", {
-            "p": [round(home_prob, 2), round(away_prob, 2)],
-            "reasoning": f"Auto-agent: {home} {home_prob:.0%} vs {away} {away_prob:.0%} — Ensemble(xG+Elo+Form+H2H) + News({news_analysis['severity']})",
-            "score": score,
-        })
-        
-        # Log prediction
-        logger.log_prediction(
-            match_id=match_id,
-            home_team=home,
-            away_team=away,
-            submitted_probs=[round(home_prob, 2), round(away_prob, 2)],
-            components=result.ensemble_components,
-            predicted_score=score,
-            reasoning=f"Auto-agent with news adjustment: {news_analysis['severity']}",
-        )
-        
-        print(f"  ✅ Submitted: {match_id}")
-        return True
-    except Exception as e:
-        print(f"  ❌ Failed: {e}")
-        return False
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            api_request("POST", "/predictions", {
+                "match_id": match_id,
+                "p": [round(home_prob, 2), round(away_prob, 2)],
+                "reasoning": f"Auto-agent: {home} {home_prob:.0%} vs {away} {away_prob:.0%} — Ensemble(xG+Elo+Form+H2H) + News({news_analysis['severity']})",
+                "score": score,
+            })
+            
+            # Log prediction
+            logger.log_prediction(
+                match_id=match_id,
+                home_team=home,
+                away_team=away,
+                submitted_probs=[round(home_prob, 2), round(away_prob, 2)],
+                components=result.ensemble_components,
+                predicted_score=score,
+                reasoning=f"Auto-agent with news adjustment: {news_analysis['severity']}",
+            )
+            
+            print(f"  ✅ Submitted: {match_id}")
+            return True
+        except Exception as e:
+            if "429" in str(e) and attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 5
+                print(f"  ⚠️  Rate limited (429). Retrying in {wait_time}s... ({attempt+1}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                print(f"  ❌ Failed: {e}")
+                return False
+    return False
 
 
 def run_auto_agent(dry_run: bool = True, match_id: str = None, check_news: bool = False):
@@ -182,8 +191,8 @@ def run_auto_agent(dry_run: bool = True, match_id: str = None, check_news: bool 
         if auto_predict_match(mid, home, away, dry_run=dry_run, check_news=check_news):
             success_count += 1
         
-        # Rate limit: be nice to API
-        time.sleep(0.5)
+        # Rate limit: be nice to API (2 seconds between requests)
+        time.sleep(2)
     
     print(f"\n{'='*70}")
     print(f"SUMMARY: {success_count}/{len(matches)} predictions submitted")

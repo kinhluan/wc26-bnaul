@@ -165,7 +165,8 @@ def submit_prediction(match_id: str, home_prob: float, away_prob: float, score: 
         return True
     
     try:
-        api_request("POST", f"/predictions/{match_id}", {
+        api_request("POST", "/predictions", {
+            "match_id": match_id,
             "p": [round(home_prob, 2), round(away_prob, 2)],
             "reasoning": f"Ensemble model: xG + Elo + Betting + Form + H2H + Injury",
             "score": score,
