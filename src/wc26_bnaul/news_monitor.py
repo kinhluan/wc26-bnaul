@@ -59,6 +59,7 @@ def check_news_for_match(match_id: str, home: str, away: str) -> Optional[Dict]:
     # - RSS feeds từ BBC Sport, ESPN, Goal.com
     # - Twitter/X API cho real-time updates
     # - SofaScore API cho chấn thương/đội hình
+    # - API-Football injuries endpoint
     
     return None
 
@@ -188,20 +189,39 @@ def adjust_probability(current_prob: float, news: Dict, player_analysis: Dict = 
     return max(0.01, min(0.99, new_prob))
 
 
-def monitor_and_resubmit(dry_run: bool = True, check_interval: int = 300):
+def monitor_and_resubmit(dry_run: bool = True, check_interval: int = 300, use_fifa_data: bool = False):
     """
     Main loop: monitor open matches và resubmit khi cần.
     
     Args:
         dry_run: Nếu True, chỉ log không thực sự resubmit
         check_interval: Số giây giữa các lần check (default: 5 phút)
+        use_fifa_data: Nếu True, tích hợp dữ liệu FIFA để cải thiện dự đoán
     """
     print("=" * 70)
     print("CLAWCUP NEWS MONITOR")
     print("=" * 70)
     print(f"Mode: {'DRY RUN' if dry_run else 'LIVE'}")
     print(f"Check interval: {check_interval} seconds")
+    print(f"FIFA data: {'ENABLED' if use_fifa_data else 'DISABLED'}")
     print()
+    
+    # Import FIFA data modules nếu cần
+    fifa_data = None
+    predictor = None
+    if use_fifa_data:
+        try:
+            from .fifa_data import get_team_statistics_api_football, get_injuries_api_football
+            from .predictor import MatchPredictor
+            predictor = MatchPredictor()
+            fifa_data = {
+                "get_team_stats": get_team_statistics_api_football,
+                "get_injuries": get_injuries_api_football,
+            }
+            print("✅ FIFA data modules loaded")
+        except ImportError as e:
+            print(f"⚠️  Could not load FIFA data modules: {e}")
+            use_fifa_data = False
     
     while True:
         try:
@@ -247,6 +267,21 @@ def monitor_and_resubmit(dry_run: bool = True, check_interval: int = 300):
                 # 5. Phân tích cầu thủ
                 player_analysis = analyze_player_impact(match_id, home, away)
                 
+                # 6. Tích hợp dữ liệu FIFA (nếu enabled)
+                fifa_analysis = None
+                if use_fifa_data and fifa_data and predictor:
+                    try:
+                        print(f"  → Fetching FIFA data...")
+                        # TODO: Map team names to API IDs
+                        # This requires a mapping from ClawCup team names to API-Football team IDs
+                        # For now, skip actual API calls
+                        fifa_analysis = {
+                            "has_data": False,
+                            "notes": ["FIFA data integration requires team ID mapping"]
+                        }
+                    except Exception as e:
+                        print(f"  → FIFA data error: {e}")
+                
                 if player_analysis.get("has_research"):
                     print(f"  → Player analysis: Research file found")
                     key_players = player_analysis.get("key_players", {})
@@ -259,12 +294,15 @@ def monitor_and_resubmit(dry_run: bool = True, check_interval: int = 300):
                     print(f"  → News found: {news.get('headline', 'N/A')}")
                     print(f"  → Severity: {news.get('severity', 'low')}")
                 
-                # 6. Kiểm tra xem đã có dự đoán chưa
+                if fifa_analysis and fifa_analysis.get("has_data"):
+                    print(f"  → FIFA data: Available")
+                
+                # 7. Kiểm tra xem đã có dự đoán chưa
                 if match_id in pred_map:
                     current_pred = pred_map[match_id]
                     print(f"  → Current prediction: {current_pred}")
                     
-                    # 7. Quyết định resubmit
+                    # 8. Quyết định resubmit
                     if should_resubmit(current_pred, news, player_analysis):
                         new_prob = adjust_probability(
                             current_pred.get("p", [0.5, 0.5])[0],
@@ -285,6 +323,10 @@ def monitor_and_resubmit(dry_run: bool = True, check_interval: int = 300):
                         print(f"  → No resubmit needed")
                 else:
                     print(f"  → No existing prediction for this match")
+                    
+                    # Nếu chưa có dự đoán và FIFA data available, tạo dự đoán mới
+                    if use_fifa_data and fifa_analysis and fifa_analysis.get("has_data"):
+                        print(f"  → Would generate prediction from FIFA data")
             
             # Sleep until next check
             print(f"\n{'='*70}")
@@ -340,10 +382,11 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true", help="Run without actual resubmit")
     parser.add_argument("--interval", type=int, default=300, help="Check interval in seconds")
     parser.add_argument("--check", help="Manual check a specific match ID")
+    parser.add_argument("--fifa-data", action="store_true", help="Enable FIFA data integration")
     
     args = parser.parse_args()
     
     if args.check:
         manual_check(args.check, dry_run=args.dry_run)
     else:
-        monitor_and_resubmit(dry_run=args.dry_run, check_interval=args.interval)
+        monitor_and_resubmit(dry_run=args.dry_run, check_interval=args.interval, use_fifa_data=args.fifa_data)
