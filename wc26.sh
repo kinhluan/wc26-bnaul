@@ -103,6 +103,8 @@ show_interactive_menu() {
     echo -e "${RED}[19]${NC} ${BOLD}run${NC} <match_id>          — FULL PIPELINE: news → model → submit"
     echo -e "${MAGENTA}[20]${NC} ${BOLD}performance${NC}           — View prediction accuracy & Brier scores"
     echo -e "${MAGENTA}[21]${NC} ${BOLD}suggest-weights${NC}         — Get weight updates based on history"
+    echo -e "${MAGENTA}[22]${NC} ${BOLD}auto-agent${NC}            — Auto predict all open matches (dry-run)"
+    echo -e "${MAGENTA}[23]${NC} ${BOLD}auto-agent-live${NC}       — Auto predict and submit (LIVE)"
     echo ""
     
     echo -e "${CYAN}[13]${NC} ${BOLD}test${NC}                  — Run all tests"
@@ -464,6 +466,22 @@ run_interactive() {
                 print_section "Suggested Weight Updates"
                 uv run wc26-bnaul suggest-weights
                 ;;
+            22)
+                check_uv
+                print_section "Auto Agent — All Open Matches"
+                uv run wc26-bnaul auto-agent --dry-run
+                ;;
+            23)
+                check_uv
+                print_error "WARNING: This will auto-submit predictions!"
+                echo -n "Are you sure? (yes/no): "
+                read -r confirm
+                if [ "$confirm" = "yes" ]; then
+                    uv run wc26-bnaul auto-agent --live
+                else
+                    print_info "Cancelled"
+                fi
+                ;;
             13)
                 check_uv
                 print_section "Running Tests"
@@ -660,6 +678,34 @@ case "${1:-}" in
         check_uv
         print_section "Suggested Weight Updates"
         uv run wc26-bnaul suggest-weights
+        ;;
+    
+    auto-agent)
+        check_uv
+        if [ -z "$2" ]; then
+            print_section "Auto Agent — All Open Matches"
+            uv run wc26-bnaul auto-agent --dry-run
+        else
+            print_section "Auto Agent — Match $2"
+            uv run wc26-bnaul auto-agent --match "$2" --dry-run
+        fi
+        ;;
+    
+    auto-agent-live)
+        check_uv
+        print_error "WARNING: This will auto-submit predictions without confirmation!"
+        read -p "Are you sure? (yes/no): " confirm
+        if [ "$confirm" = "yes" ]; then
+            if [ -z "$2" ]; then
+                print_section "Auto Agent LIVE — All Open Matches"
+                uv run wc26-bnaul auto-agent --live
+            else
+                print_section "Auto Agent LIVE — Match $2"
+                uv run wc26-bnaul auto-agent --match "$2" --live
+            fi
+        else
+            print_info "Cancelled"
+        fi
         ;;
     
     help|--help|-h)

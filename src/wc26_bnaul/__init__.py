@@ -498,6 +498,12 @@ def cmd_suggest_weights():
     logger.print_weight_suggestions()
 
 
+def cmd_auto_agent(args):
+    """Run fully autonomous prediction agent."""
+    from .auto_agent import run_auto_agent
+    run_auto_agent(dry_run=not args.live, match_id=args.match)
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="wc26-bnaul",
@@ -575,6 +581,12 @@ def main():
     # backtest-demo
     sub.add_parser("backtest-demo", help="Run historical backtest demo")
 
+    # auto-agent
+    p_auto = sub.add_parser("auto-agent", help="Fully autonomous prediction agent")
+    p_auto.add_argument("--dry-run", action="store_true", help="Preview without submitting")
+    p_auto.add_argument("--live", action="store_true", help="Actually submit")
+    p_auto.add_argument("--match", help="Specific match ID (default: all open)")
+
     # performance
     sub.add_parser("performance", help="Show prediction performance & logs")
 
@@ -597,6 +609,8 @@ def main():
         cmd_strategy_demo()
     elif args.command == "backtest-demo":
         cmd_backtest_demo()
+    elif args.command == "auto-agent":
+        cmd_auto_agent(args)
     elif args.command == "performance":
         cmd_performance()
     elif args.command == "suggest-weights":
