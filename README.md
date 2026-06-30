@@ -1,10 +1,12 @@
 # wc26-bnaul: ClawCup Agent for FIFA World Cup 2026
 
-> Autonomous prediction agent with ensemble modeling (xG + Elo + Betting + Form + Monte Carlo), real-time FIFA data, and automated news monitoring.
+> **Rank #1 on ClawCup.io knockout leaderboard** (SKILL: improving, 3 matches scored). Autonomous prediction agent with ensemble modeling (ELO + xG + Form + Squad Depth + H2H + Injuries + Monte Carlo), real-time FIFA data, automated news monitoring, and 5-iteration reasoning loop.
 
-**Research Question:** How can an autonomous agent leverage probabilistic forecasting, external data integration, and real-time information monitoring to optimize performance in a strictly proper scoring rule prediction tournament?
+**Research Question:** How can an autonomous agent leverage probabilistic forecasting, external data integration, real-time information monitoring, and selective submission to optimize performance in a strictly proper scoring rule prediction tournament?
 
-**For Agents:** See [`AGENTS.md`](AGENTS.md) for complete agent onboarding guide (updated 2026-06-30 with backtest analysis & competitor research).
+**Key Innovation:** 5 Core Principles for SKILL optimization — (1) Truthful submission, (2) Knockout cap 65%, (3) Selectivity (50/50 when uncertain), (4) ELO-based ratings, (5) Knockout draw awareness (penalty shootout = ~50/50).
+
+**For Agents:** See [`AGENTS.md`](AGENTS.md) for complete agent onboarding guide (updated 2026-06-30 with backtest analysis, competitor research, and Amir Motefaker dataset integration).
 
 **For Humans:** See [GitHub Issues](https://github.com/kinhluan/wc26-bnaul/issues) for detailed analysis:
 - [#1](https://github.com/kinhluan/wc26-bnaul/issues/1) Match-by-match breakdown
@@ -38,12 +40,14 @@ cp .env.example .env  # Edit with your tokens
 
 | Feature | Description |
 |---------|-------------|
-| **Ensemble Model** | xG + Elo + Betting odds + Form + H2H + Injuries + Monte Carlo |
-| **FIFA Data** | football-data.org + API-Football integration |
+| **Ensemble Model** | ELO (30%) + FIFA Rank (10%) + xG (20%) + Form (15%) + Squad Depth (5%) + H2H (10%) + Injuries (10%) + Monte Carlo validation |
+| **Dataset Integration** | Amir Motefaker dataset: 46 teams with real ELO ratings (1698-2045), squad depth scores, 16 venues with altitude/xG modifiers |
+| **5 Principles** | Truthful submission + Knockout cap 65% + Selectivity (50/50) + ELO-based + Knockout draw awareness |
 | **News Monitor** | NewsAPI + RSS feeds + injury tracking with auto-resubmit |
 | **Math Proof** | Truthful submission optimal under Brier score (Gneiting & Raftery, 2007) |
 | **CLI + Script** | `uv run` commands or `./wc26.sh` interactive menu |
 | **Backtest** | 75 matches analyzed, Skill improved from 8.1% → 13.1% ([Issue #4](https://github.com/kinhluan/wc26-bnaul/issues/4)) |
+| **Reasoning Loop** | 5-iteration agent loop: Data → Cross-analysis → Deep reasoning → Meta-analysis → Final decision |
 
 **Key Insight:** Brier score is a strictly proper scoring rule — expected score is maximized iff you report your true belief. Over-confidence is punished.
 

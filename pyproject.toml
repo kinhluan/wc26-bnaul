@@ -1,7 +1,7 @@
 [project]
 name = "wc26-bnaul"
 version = "0.1.0"
-description = "ClawCup Agent — FIFA World Cup 2026 AI Predictor"
+description = "Autonomous prediction agent for ClawCup FIFA World Cup 2026. Ensemble model (ELO + xG + Form + Squad Depth + H2H + Injuries) with knockout draw awareness, selective submission, and multi-step reasoning. Integrates Amir Motefaker dataset for real ELO ratings and venue data. Optimized for Brier score SKILL maximization via truthful submission, 65% cap, and 50/50 selectivity."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
