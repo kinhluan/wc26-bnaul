@@ -586,10 +586,19 @@ class AgentReasoningLoop:
         # Principle 3: SELECTIVITY — if no clear edge, submit 50/50
         # Learned from jason (55% SKILL): selective submission beats overconfidence
         # Threshold: 48-52% means no meaningful edge — better to admit uncertainty
-        if SELECTIVITY_THRESHOLD_LOW < home_prob < SELECTIVITY_THRESHOLD_HIGH:
+        # Principle 5: For knockout, extend threshold to 55% (learned from m075, m076)
+        # Both wrong predictions were 55-59% → 50/50 would have been better
+        effective_selectivity_low = SELECTIVITY_THRESHOLD_LOW
+        effective_selectivity_high = SELECTIVITY_THRESHOLD_HIGH
+        if is_knockout:
+            # Knockout: wider selectivity band (45-55%)
+            effective_selectivity_low = 0.45
+            effective_selectivity_high = 0.55
+        
+        if effective_selectivity_low < home_prob < effective_selectivity_high:
             home_prob = 0.50
             away_prob = 0.50
-            selectivity_note = "No clear edge → 50/50 (Principle 3: Selectivity)"
+            selectivity_note = f"No clear edge → 50/50 (Principle 3+5: Selectivity, knockout band {effective_selectivity_low:.0%}-{effective_selectivity_high:.0%})"
         else:
             selectivity_note = "Clear edge detected"
         

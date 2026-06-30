@@ -46,39 +46,35 @@ from dataclasses import dataclass
 # =============================================================================
 
 # =============================================================================
-# SKILL OPTIMIZATION: 4 Core Principles
+# SKILL OPTIMIZATION: 4 Core Principles + Knockout Draw Learning
 # =============================================================================
 #
 # 1. TRUTHFUL SUBMISSION: Always submit your true belief probability
 #    Brier is strictly proper scoring rule — truthful is optimal
-#    Never "game" the system by submitting different from your belief
 #
 # 2. KNOCKOUT CAP 65%: Penalty shootouts make even 70% favorites ~50/50
 #    Learned from: wc-kimi (caps 65%), jason (burned by 82%)
-#    Applied in: predict() method with min(0.65, max(0.35, home_strength))
 #
 # 3. SELECTIVITY: If no clear edge (48-52%), submit 50/50
 #    Learned from: jason (selective, 55% SKILL)
-#    Applied in: auto_agent.py with selectivity threshold
 #
 # 4. ELO-BASED: Use real ELO ratings (not FIFA rank approximation)
-#    ELO accounts for opponent strength, FIFA rank doesn't
 #    Source: Amir Motefaker dataset (1698-2045 range)
-#    Applied in: _elo_component() with standard ELO formula
+#
+# 5. KNOCKOUT DRAW AWARENESS (NEW — learned from m075, m076):
+#    - 2/3 knockout matches so far ended in draw (penalty shootout)
+#    - Draw + penalty = away advances (binary outcome = 0)
+#    - Model predicted home win (59%, 56%) but actual = away advances
+#    - Brier with 50/50: 0.25 | Brier with model: 0.35, 0.30
+#    - → 50/50 BETTER than model for close knockout matches!
+#    - Fix: Lower selectivity threshold to 55% for knockout
+#    - Fix: Stronger shrinkage (0.90 instead of 0.95)
+#    - Fix: Higher base draw probability (0.25 instead of 0.15)
 #
 # Reference: docs/01_STRATEGY.md for mathematical proof
 # =============================================================================
 
 # Ensemble weights (calibrated on historical data + Amir Motefaker dataset)
-# Updated after Issue #4 backtest + Amir dataset integration:
-# - ELO rating (from Amir dataset) is strongest predictor → 30%
-# - FIFA rank (official) → 10% (secondary strength signal)
-# - xG is noisy (58.7% accuracy) → 20%
-# - Form is surprisingly good (62.7% accuracy) → 15%
-# - Squad Depth (from Amir) → 5% (new component)
-# - H2H → 10%
-# - Injuries critical for knockouts → 10%
-# - Betting rarely available → 10% (when available)
 WEIGHT_ELO = 0.30
 WEIGHT_FIFA = 0.10
 WEIGHT_XG = 0.20
@@ -88,24 +84,27 @@ WEIGHT_SQUAD_DEPTH = 0.05
 WEIGHT_H2H = 0.10
 WEIGHT_INJURIES = 0.10
 
-# Total: 1.10 (when betting available, renormalize)
-# When betting NOT available: total = 1.00 (perfect)
-
 # SKILL Optimization constants
-KNOCKOUT_CONFIDENCE_CAP = 0.65  # Never exceed 65% in knockouts (penalty factor)
-KNOCKOUT_CONFIDENCE_FLOOR = 0.35  # Never below 35% (upset risk)
-KNOCKOUT_VARIANCE_PENALTY = 0.95  # Shrink toward 0.50 by 5%
-SELECTIVITY_THRESHOLD_LOW = 0.48  # If prob < 48%, consider 50/50
-SELECTIVITY_THRESHOLD_HIGH = 0.52  # If prob > 52%, consider 50/50
-HOME_ADVANTAGE_BOOST = 0.05  # 5% home advantage (neutral venue adjusted)
+KNOCKOUT_CONFIDENCE_CAP = 0.65
+KNOCKOUT_CONFIDENCE_FLOOR = 0.35
+KNOCKOUT_VARIANCE_PENALTY = 0.90  # CHANGED: 0.95 → 0.90 (stronger shrinkage)
+SELECTIVITY_THRESHOLD_LOW = 0.48
+SELECTIVITY_THRESHOLD_HIGH = 0.52
+HOME_ADVANTAGE_BOOST = 0.05
+
+# Knockout draw awareness (NEW)
+KNOCKOUT_BASE_DRAW = 0.25  # CHANGED: 0.15 → 0.25 (higher draw probability)
+KNOCKOUT_CLOSE_MATCH_CAP = 0.55  # NEW: For ELO gap < 100, cap at 55%
+KNOCKOUT_CLOSE_ELO_GAP = 100  # NEW: Threshold for "close match"
+KNOCKOUT_ELO_DISCOUNT = 0.70  # NEW: Reduce ELO gap by 30% in knockout (learned from m075, m076)
+
+# Poisson parameters
+POISSON_MAX_GOALS = 10
 
 # Elo parameters
 ELO_K = 32
 ELO_INITIAL = 1500
 ELO_SCALE = 400  # Standard ELO scaling factor
-
-# Poisson parameters
-POISSON_MAX_GOALS = 10
 
 
 # =============================================================================
@@ -139,9 +138,17 @@ class MatchPrediction:
     ensemble_components: Dict[str, float]  # Debug: từng component
     
     def to_binary(self) -> Tuple[float, float]:
-        """Convert 3-way to binary (knockout) probabilities."""
-        home_advance = self.home_win_prob + self.draw_prob
-        away_advance = self.away_win_prob
+        """Convert 3-way to binary (knockout) probabilities.
+        
+        Principle 5: Penalty shootout awareness.
+        In knockout, draw → penalty shootout → ~50/50.
+        So draw is worth 0.5 for home, not 1.0.
+        This makes binary predictions more conservative.
+        """
+        # Old: home_advance = home_win + draw (assumes draw = home win)
+        # New: home_advance = home_win + draw * 0.5 (draw = 50/50 penalty)
+        home_advance = self.home_win_prob + self.draw_prob * 0.5
+        away_advance = self.away_win_prob + self.draw_prob * 0.5
         total = home_advance + away_advance
         return home_advance / total, away_advance / total
 
@@ -202,12 +209,18 @@ class EnsemblePredictor:
     def __init__(self):
         self.elo = EloRating()
     
-    def _elo_component(self, home_rank: int, away_rank: int, home_elo: int = 0, away_elo: int = 0) -> float:
+    def _elo_component(self, home_rank: int, away_rank: int, home_elo: int = 0, away_elo: int = 0, knockout: bool = False) -> float:
         """
         Elo-based probability using actual ELO ratings from Amir dataset.
         
         Principle 4: ELO-BASED — Use real ELO ratings, not FIFA rank approximation.
         ELO accounts for opponent strength; FIFA rank does not.
+        
+        Principle 5: In knockout, ELO advantage is discounted because:
+        - Single-elimination = higher variance
+        - Draw → penalty shootout = ~50/50
+        - Underdogs play more defensively
+        - Favorites choke under pressure
         
         If ELO ratings provided (home_elo, away_elo > 0), use them directly.
         Otherwise, fall back to FIFA rank-based approximation.
@@ -215,7 +228,15 @@ class EnsemblePredictor:
         if home_elo > 0 and away_elo > 0:
             # Use actual ELO ratings (from Amir dataset)
             # Standard ELO expected score formula: 1 / (1 + 10^((Rb-Ra)/400))
-            home_strength = 1 / (1 + 10 ** ((away_elo - home_elo) / ELO_SCALE))
+            
+            # Knockout discount: reduce ELO gap by 30%
+            # Learned from m075, m076: ELO overpredicts favorite advantage in knockout
+            if knockout:
+                elo_gap = away_elo - home_elo  # Negative = home favored
+                discounted_gap = elo_gap * 0.70  # Reduce gap by 30%
+                home_strength = 1 / (1 + 10 ** (discounted_gap / ELO_SCALE))
+            else:
+                home_strength = 1 / (1 + 10 ** ((away_elo - home_elo) / ELO_SCALE))
             return home_strength
         
         # Fallback: Convert FIFA rank to Elo-like strength
@@ -402,7 +423,7 @@ class EnsemblePredictor:
         
         # Calculate individual components
         # ELO component: use real ELO if available, otherwise fallback to FIFA rank
-        elo_prob = self._elo_component(home_rank, away_rank, home_elo, away_elo)
+        elo_prob = self._elo_component(home_rank, away_rank, home_elo, away_elo, knockout=knockout)
         fifa_prob = self._fifa_component(home_rank, away_rank)
         xg_home_prob, xg_away_prob = self._xg_component(home_xg, home_xga, away_xg, away_xga)
         form_prob = self._form_component(home_form, away_form)
@@ -438,17 +459,28 @@ class EnsemblePredictor:
         if home_advantage:
             home_strength += HOME_ADVANTAGE_BOOST
         
-        # Knockout variance penalty (Principle 2: Cap 65%)
+        # Knockout variance penalty (Principle 2: Cap 65% + Principle 5: Draw Awareness)
         # Research (Tactiq 2026): single-elimination has higher variance
         # Teams play more conservatively, upsets are more common
+        # Learned from m075, m076: 2/3 matches ended in draw → shrink more aggressively
         if knockout:
             home_strength = 0.5 + (home_strength - 0.5) * KNOCKOUT_VARIANCE_PENALTY
         
         # Confidence cap for knockout (Principle 2: Cap 65%)
         # Penalty shootouts make even true 70% favorites ~50/50
         # Learned from competitor analysis (wc-kimi caps at 65%, jason burned by 82%)
+        # Principle 5: For close matches (ELO gap < 100), cap at 55%
         if knockout:
-            home_strength = min(KNOCKOUT_CONFIDENCE_CAP, max(KNOCKOUT_CONFIDENCE_FLOOR, home_strength))
+            if home_elo > 0 and away_elo > 0:
+                elo_gap = abs(home_elo - away_elo)
+                if elo_gap < KNOCKOUT_CLOSE_ELO_GAP:
+                    # Close match → lower cap
+                    effective_cap = KNOCKOUT_CLOSE_MATCH_CAP
+                else:
+                    effective_cap = KNOCKOUT_CONFIDENCE_CAP
+            else:
+                effective_cap = KNOCKOUT_CONFIDENCE_CAP
+            home_strength = min(effective_cap, max(KNOCKOUT_CONFIDENCE_FLOOR, home_strength))
         
         # Principle 3: Selectivity — if no clear edge, submit 50/50
         # This is applied AFTER ensemble but BEFORE final output
@@ -460,13 +492,22 @@ class EnsemblePredictor:
         away_strength = 1 - home_strength
         
         # Calculate 3-way probabilities from home_strength (analytical)
+        # For knockout: binary outcome = home advances (win OR draw)
+        # So home_advance = home_win + draw, away_advance = away_win
+        # But in reality, draw → penalty shootout → ~50/50
+        # So we should treat draw as reducing home advantage
+        
         # Home win probability
         home_win_prob = home_strength * 0.75
         
-        # Draw probability
+        # Draw probability (Principle 5: Knockout Draw Awareness)
+        # Learned from m075, m076: 2/3 knockout matches ended in draw
+        # Higher draw probability = more conservative predictions
+        # In knockout, draw means penalty shootout = ~50/50
+        # So we REDUCE home_win_prob and INCREASE draw_prob
         base_draw = 0.20
         if knockout:
-            base_draw = 0.15
+            base_draw = KNOCKOUT_BASE_DRAW  # 0.25 (was 0.15)
         draw_prob = base_draw * (1 - abs(home_strength - 0.5) * 2)
         
         # Away win probability
@@ -477,6 +518,13 @@ class EnsemblePredictor:
         home_win_prob /= total
         draw_prob /= total
         away_win_prob /= total
+        
+        # For binary (knockout): home_advance = home_win + draw
+        # But penalty shootout makes draw ~50/50, not 100% home
+        # So we adjust: home_advance = home_win + draw * 0.5
+        # This makes the model more conservative for close matches
+        # NOTE: This adjustment is done in to_binary() method, not here
+        # to preserve the 3-way probabilities for display purposes
         
         # Expected goals using xG with environmental modifiers (from Amir Motefaker)
         # Fatigue modifier: rest < 3 days reduces xG by 10%
