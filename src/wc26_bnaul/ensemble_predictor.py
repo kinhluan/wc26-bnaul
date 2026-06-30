@@ -46,12 +46,18 @@ from dataclasses import dataclass
 # =============================================================================
 
 # Ensemble weights (calibrated on historical data)
-WEIGHT_ELO = 0.20
-WEIGHT_XG = 0.25
-WEIGHT_BETTING = 0.20
+# Updated after Issue #4 backtest analysis:
+# - Elo is strongest component (61.3% accuracy) → increase to 30%
+# - xG is noisy (58.7% accuracy) → decrease to 20%
+# - Form is surprisingly good (62.7% accuracy) → keep at 15%
+# - Injuries critical for knockouts → increase to 15%
+# - Betting rarely available → decrease fallback to 10%
+WEIGHT_ELO = 0.30
+WEIGHT_XG = 0.20
+WEIGHT_BETTING = 0.10
 WEIGHT_FORM = 0.15
 WEIGHT_H2H = 0.10
-WEIGHT_INJURIES = 0.10
+WEIGHT_INJURIES = 0.15
 
 # Elo parameters
 ELO_K = 32
@@ -331,6 +337,12 @@ class EnsemblePredictor:
         # Add home advantage
         if home_advantage:
             home_strength += 0.05
+        
+        # Knockout variance penalty: shrink toward 0.50 by 5%
+        # Research (Tactiq 2026): single-elimination has higher variance
+        # Teams play more conservatively, upsets are more common
+        if knockout:
+            home_strength = 0.5 + (home_strength - 0.5) * 0.95
         
         # Normalize
         home_strength = min(max(home_strength, 0.1), 0.9)

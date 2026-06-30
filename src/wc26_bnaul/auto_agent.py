@@ -99,19 +99,9 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
     away_prob = binary[1]
     score = result.most_likely_score
     
-    # CAP PREDICTED DRAWS IN KNOCKOUT
-    # Research: penalty shootouts are ~50/50 coin flips (Csató 2022, Tactiq 2026)
-    # Overconfidence here is devastating (m075: Germany 64% → lost on penalties, Brier = 0.41)
-    if score in ("1-1", "0-0", "2-2"):
-        old_home_prob = home_prob
-        # Shrink toward 0.50, but keep slight favorite if there is one
-        if home_prob > 0.5:
-            home_prob = min(home_prob, 0.52)
-        else:
-            home_prob = max(home_prob, 0.48)
-        away_prob = 1.0 - home_prob
-        print(f"  ⚠️  PREDICTED DRAW — Capping knockout binary: {home} {old_home_prob:.0%} → {home_prob:.0%}")
-        print(f"  Reason: Penalty shootouts are ~50/50. Research-backed cap from Issue #3.")
+    # NOTE: Draw cap removed (Issue #4 backtest shows it hurts performance)
+    # Score prediction is unreliable (predicts 1-1 for 75% of matches)
+    # Trust binary probability directly
     
     print(f"  Base prediction: {home} {home_prob:.0%} vs {away} {away_prob:.0%}")
     print(f"  Score: {score}")
