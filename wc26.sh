@@ -103,8 +103,9 @@ show_interactive_menu() {
     echo -e "${RED}[19]${NC} ${BOLD}run${NC} <match_id>          — FULL PIPELINE: news → model → submit"
     echo -e "${MAGENTA}[20]${NC} ${BOLD}performance${NC}           — View prediction accuracy & Brier scores"
     echo -e "${MAGENTA}[21]${NC} ${BOLD}suggest-weights${NC}         — Get weight updates based on history"
-    echo -e "${MAGENTA}[22]${NC} ${BOLD}auto-agent${NC}            — Auto predict all open matches (dry-run)"
-    echo -e "${MAGENTA}[23]${NC} ${BOLD}auto-agent-live${NC}       — Auto predict and submit (LIVE)"
+    echo -e "${MAGENTA}[22]${NC} ${BOLD}auto-agent${NC}            — Auto predict all open matches (dry-run, WITH NEWS CHECK)"
+    echo -e "${MAGENTA}[23]${NC} ${BOLD}auto-agent-live${NC}       — Auto predict and submit (LIVE, WITH NEWS CHECK)"
+    echo -e "${MAGENTA}[24]${NC} ${BOLD}auto-agent-fast${NC}       — Auto predict (FAST — skips news, NOT RECOMMENDED)"
     echo ""
     
     echo -e "${CYAN}[13]${NC} ${BOLD}test${NC}                  — Run all tests"
@@ -130,6 +131,7 @@ show_quick_help() {
     echo -e "${MAGENTA}Utility:${NC} status, env-check, help"
     echo ""
     echo -e "${RED}Pipeline:${NC} run <match_id> — Full pipeline: news → model → submit"
+    echo -e "${RED}Auto:${NC} auto-agent, auto-agent-live, auto-agent-fast <match_id>"
     echo ""
     echo "Run without arguments for interactive menu."
 }
@@ -468,7 +470,8 @@ run_interactive() {
                 ;;
             22)
                 check_uv
-                print_section "Auto Agent — All Open Matches"
+                print_section "Auto Agent — All Open Matches (WITH NEWS CHECK)"
+                print_info "Checking news + injuries before predicting (recommended)"
                 uv run wc26-bnaul auto-agent --dry-run
                 ;;
             23)
@@ -478,6 +481,18 @@ run_interactive() {
                 read -r confirm
                 if [ "$confirm" = "yes" ]; then
                     uv run wc26-bnaul auto-agent --live
+                else
+                    print_info "Cancelled"
+                fi
+                ;;
+            24)
+                check_uv
+                print_section "Auto Agent — FAST MODE (Skip News)"
+                print_warning "NOT RECOMMENDED — Skips injury/news checks (caused m075 failure)"
+                echo -n "Are you sure? (yes/no): "
+                read -r confirm
+                if [ "$confirm" = "yes" ]; then
+                    uv run wc26-bnaul auto-agent --dry-run --fast
                 else
                     print_info "Cancelled"
                 fi
@@ -683,11 +698,25 @@ case "${1:-}" in
     auto-agent)
         check_uv
         if [ -z "$2" ]; then
-            print_section "Auto Agent — All Open Matches"
+            print_section "Auto Agent — All Open Matches (WITH NEWS CHECK)"
+            print_info "Checking news + injuries before predicting (recommended)"
             uv run wc26-bnaul auto-agent --dry-run
         else
-            print_section "Auto Agent — Match $2"
+            print_section "Auto Agent — Match $2 (WITH NEWS CHECK)"
             uv run wc26-bnaul auto-agent --match "$2" --dry-run
+        fi
+        ;;
+    
+    auto-agent-fast)
+        check_uv
+        print_warning "FAST MODE — Skips news/injury checks (NOT RECOMMENDED)"
+        print_warning "This caused m075 failure (Germany 64% → lost on penalties)"
+        if [ -z "$2" ]; then
+            print_section "Auto Agent FAST — All Open Matches"
+            uv run wc26-bnaul auto-agent --dry-run --fast
+        else
+            print_section "Auto Agent FAST — Match $2"
+            uv run wc26-bnaul auto-agent --match "$2" --dry-run --fast
         fi
         ;;
     
@@ -697,10 +726,10 @@ case "${1:-}" in
         read -p "Are you sure? (yes/no): " confirm
         if [ "$confirm" = "yes" ]; then
             if [ -z "$2" ]; then
-                print_section "Auto Agent LIVE — All Open Matches"
+                print_section "Auto Agent LIVE — All Open Matches (WITH NEWS CHECK)"
                 uv run wc26-bnaul auto-agent --live
             else
-                print_section "Auto Agent LIVE — Match $2"
+                print_section "Auto Agent LIVE — Match $2 (WITH NEWS CHECK)"
                 uv run wc26-bnaul auto-agent --match "$2" --live
             fi
         else

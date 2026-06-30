@@ -99,6 +99,20 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
     away_prob = binary[1]
     score = result.most_likely_score
     
+    # CAP PREDICTED DRAWS IN KNOCKOUT
+    # Research: penalty shootouts are ~50/50 coin flips (Csató 2022, Tactiq 2026)
+    # Overconfidence here is devastating (m075: Germany 64% → lost on penalties, Brier = 0.41)
+    if score in ("1-1", "0-0", "2-2"):
+        old_home_prob = home_prob
+        # Shrink toward 0.50, but keep slight favorite if there is one
+        if home_prob > 0.5:
+            home_prob = min(home_prob, 0.52)
+        else:
+            home_prob = max(home_prob, 0.48)
+        away_prob = 1.0 - home_prob
+        print(f"  ⚠️  PREDICTED DRAW — Capping knockout binary: {home} {old_home_prob:.0%} → {home_prob:.0%}")
+        print(f"  Reason: Penalty shootouts are ~50/50. Research-backed cap from Issue #3.")
+    
     print(f"  Base prediction: {home} {home_prob:.0%} vs {away} {away_prob:.0%}")
     print(f"  Score: {score}")
     print(f"  Confidence: {result.confidence:.0%}")
@@ -205,12 +219,15 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Preview without submitting")
     parser.add_argument("--live", action="store_true", help="Actually submit")
     parser.add_argument("--match", help="Specific match ID (default: all open)")
-    parser.add_argument("--news", action="store_true", help="Check news (slower but more accurate)")
+    parser.add_argument("--fast", action="store_true", help="Skip news check (NOT RECOMMENDED)")
     
     args = parser.parse_args()
     
     dry_run = not args.live
-    run_auto_agent(dry_run=dry_run, match_id=args.match, check_news=args.news)
+    # Default: check_news = True (always check news unless --fast)
+    # Research-backed: skipping news caused m075 failure (Issue #1, #3)
+    check_news = not args.fast
+    run_auto_agent(dry_run=dry_run, match_id=args.match, check_news=check_news)
 
 
 if __name__ == "__main__":
