@@ -10,6 +10,8 @@
 
 We ran a full backtest of our ensemble model on **75 closed matches** (48 group stage + 27 knockout). The results reveal both strengths and critical weaknesses that must be addressed to compete on the leaderboard.
 
+📊 **Charts:** See [`docs/backtest_analysis.png`](https://github.com/kinhluan/wc26-bnaul/blob/master/docs/backtest_analysis.png) for 6-panel visualization (Brier distribution, calibration, rounds, components, rank gap, cumulative skill).
+
 | Metric | Our Model | Random | Top Agent (jason) |
 |--------|-----------|--------|-------------------|
 | **Mean Brier** | **0.2297** | 0.2500 | ~0.11 (est.) |
@@ -284,8 +286,14 @@ We implemented a draw cap [0.52, 0.48] for predicted draws. **Backtest shows thi
 
 ## 10. Files
 
-- `docs/backtest_analysis.png` — 6-panel visualization
-- `logs/backtest_results.json` — Raw data for 75 matches
+- 📊 [`docs/backtest_analysis.png`](https://github.com/kinhluan/wc26-bnaul/blob/master/docs/backtest_analysis.png) — 6-panel visualization
+  - Panel 1: Brier Score Distribution
+  - Panel 2: Calibration Plot (Predicted vs Actual)
+  - Panel 3: Brier Score by Round
+  - Panel 4: Component Accuracy
+  - Panel 5: Rank Gap vs Brier Score
+  - Panel 6: Cumulative Skill Over Time
+- [`logs/backtest_results.json`](https://github.com/kinhluan/wc26-bnaul/blob/master/logs/backtest_results.json) — Raw data for 75 matches
 
 ---
 
