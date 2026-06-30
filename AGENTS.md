@@ -83,20 +83,24 @@ WEIGHT_H2H = 0.10
 WEIGHT_INJURIES = 0.10
 ```
 
+> ⚠️ **Learned:** Injury weight (10%) is too low for knockout matches. Germany had 3 injuries vs Paraguay's 1 and lost despite being the favorite. Consider increasing to 15% or implementing non-linear penalty (see Section 12).
+
 ### Team Data (TEAM_DB)
 - FIFA rank, xG, xGA, form, injuries, H2H history
 - 32+ teams with realistic data
+- **Must be updated after every match** — form arrays, H2H records, injury counts
 
 ## 6. Strategy
 
 ### Brier Score is a Strictly Proper Scoring Rule
 - **Truthful submission is optimal** — always submit your true belief probability
-- Over-confidence is punished
+- Over-confidence is punished quadratically
 - Round weights: Ro32(1×) + Ro16(1.25×) = 66.7% total
 
 ### Knockout Format
 - Binary: [home_advance, away_advance] — no DRAW
 - Sum = 1.0
+- **⚠️ When model predicts a draw (1-1, 0-0), cap binary at [0.55, 0.45] max.** Penalty shootouts are ~50/50 coin flips. Overconfidence here is devastating (m075: Germany 64% → lost on penalties, Brier = 0.41).
 
 ## 7. Auto-Agent Usage
 
@@ -108,8 +112,10 @@ WEIGHT_INJURIES = 0.10
 
 ### With News Check
 ```bash
-./wc26.sh auto-agent --news       # Slower but more accurate
+./wc26.sh auto-agent --news       # Slower but more accurate — ALWAYS USE THIS
 ```
+
+> ⚠️ **Critical:** Fast mode (default) skips injury checks. For m075, Germany had 3 injuries but the model didn't adjust enough. Always run with `--news` for live data.
 
 ### Live Submit
 ```bash
@@ -123,13 +129,22 @@ uv run wc26-bnaul auto-agent --live
 ### Performance Tracking
 ```bash
 ./wc26.sh performance             # Brier score, Skill%, component accuracy
-./wc26.sh suggest-weights       # Suggest new weights
+./wc26.sh suggest-weights       # Suggest new weights (needs 10+ matches)
 ```
+
+> ⚠️ **Do NOT adjust weights before 10+ scored matches.** Sample size = 2 gives meaningless suggestions. Wait until Round of 16 ends.
 
 ### Logs
 - `logs/predictions.jsonl` — Prediction history
-- `logs/results.jsonl` — Match results history
+- `logs/results.jsonl` — Match results history (log AFTER match ends)
 - `logs/performance.json` — Performance summary
+
+### Post-Match Workflow
+After every match result:
+1. Log result: `logger.log_result(match_id, home_goals, away_goals, winner)`
+2. Update TEAM_DB: shift form array, update H2H
+3. Re-run `performance` to track Brier score
+4. Check if weight suggestions are meaningful (n >= 10)
 
 ## 9. API Credentials
 
@@ -186,6 +201,29 @@ API_FOOTBALL_KEY=your_key     # Optional
 - **Auto-agent** is the fastest way to play
 - **Performance tracking** helps improve weights over time
 - **News monitor** detects injuries via RSS + NewsAPI
+
+### Hard-Won Lessons (from m074 & m075)
+
+1. **Injuries are underestimated.** Germany had 3 injuries, model gave them 64%. They lost. Always check `--news` and manually verify injury counts.
+
+2. **Predicted draws in knockout = danger zone.** Model predicted 1-1 for m075 (correct score!) but binary was [0.64, 0.36]. Penalty shootout is a coin flip. Cap at [0.55, 0.45] for predicted draws.
+
+3. **Form can override Elo in knockouts.** Paraguay's form [1,0,1,0,1] = 60% was better than Germany's [1,0,0,1,-1] = 40%. Historical rank (#6 vs #28) didn't matter as much as recent performance.
+
+4. **Static TEAM_DB kills accuracy.** After every match, update form arrays and H2H. Stale data = stale predictions.
+
+5. **Leaderboard requires n >= 5.** We are provisional with n=2. Need 3 more scored matches just to appear. Every match counts.
+
+### Quick Reference: When to Adjust
+
+| Situation | Action |
+|-----------|--------|
+| Team has 0 injuries | Trust model |
+| Team has 1 injury | Slight caution (-2%) |
+| Team has 2+ injuries | Reduce prob by 3-5% |
+| Predicted score is draw | Cap binary at [0.55, 0.45] |
+| Round of 32 or 16 | Maximum focus (high weight) |
+| Weight suggestions after 2 matches | IGNORE — wait for n >= 10 |
 
 ---
 
