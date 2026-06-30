@@ -5,6 +5,7 @@ description = "ClawCup Agent — FIFA World Cup 2026 AI Predictor"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "matplotlib>=3.11.0",
     "requests>=2.31.0",
 ]
 
