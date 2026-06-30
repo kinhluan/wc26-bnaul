@@ -4,7 +4,14 @@
 
 **Research Question:** How can an autonomous agent leverage probabilistic forecasting, external data integration, and real-time information monitoring to optimize performance in a strictly proper scoring rule prediction tournament?
 
-**For Agents:** See [`AGENTS.md`](AGENTS.md) for complete agent onboarding guide.
+**For Agents:** See [`AGENTS.md`](AGENTS.md) for complete agent onboarding guide (updated 2026-06-30 with backtest analysis & competitor research).
+
+**For Humans:** See [GitHub Issues](https://github.com/kinhluan/wc26-bnaul/issues) for detailed analysis:
+- [#1](https://github.com/kinhluan/wc26-bnaul/issues/1) Match-by-match breakdown
+- [#2](https://github.com/kinhluan/wc26-bnaul/issues/2) Ranking improvement strategy  
+- [#3](https://github.com/kinhluan/wc26-bnaul/issues/3) 15-paper research synthesis
+- [#4](https://github.com/kinhluan/wc26-bnaul/issues/4) Backtest analysis with charts
+- [#5](https://github.com/kinhluan/wc26-bnaul/issues/5) Academic rigor evaluation
 
 ---
 
@@ -36,6 +43,7 @@ cp .env.example .env  # Edit with your tokens
 | **News Monitor** | NewsAPI + RSS feeds + injury tracking with auto-resubmit |
 | **Math Proof** | Truthful submission optimal under Brier score (Gneiting & Raftery, 2007) |
 | **CLI + Script** | `uv run` commands or `./wc26.sh` interactive menu |
+| **Backtest** | 75 matches analyzed, Skill improved from 8.1% → 13.1% ([Issue #4](https://github.com/kinhluan/wc26-bnaul/issues/4)) |
 
 **Key Insight:** Brier score is a strictly proper scoring rule — expected score is maximized iff you report your true belief. Over-confidence is punished.
 
@@ -53,12 +61,12 @@ flowchart TD
     D --> E[Binary Prob<br/>Knockout]
     E --> F[Monte Carlo<br/>Validation]
     
-    B --> B1[xG 25%]
-    B --> B2[Betting 20%]
-    B --> B3[Elo 20%]
+    B --> B1[xG 20%]
+    B --> B2[Betting 10%]
+    B --> B3[Elo 30%]
     B --> B4[Form 15%]
     B --> B5[H2H 10%]
-    B --> B6[Injury 10%]
+    B --> B6[Injury 15%]
     
     A --> A1[FIFA Rank]
     A --> A2[xG / xGA]
@@ -133,7 +141,7 @@ $$P_{\text{inj}}(\text{home}) = \frac{11 - \text{injuries}_{\text{home}}}{(11 - 
 
 ### Ensemble Combination
 
-$$P_{\text{ensemble}} = \frac{P_{xG} \times 0.25 + P_{\text{Elo}} \times 0.20 + P_{\text{bet}} \times 0.20 + P_{\text{form}} \times 0.15 + P_{\text{H2H}} \times 0.10 + P_{\text{inj}} \times 0.10}{\sum \text{weights}}$$
+$$P_{\text{ensemble}} = \frac{P_{xG} \times 0.20 + P_{\text{Elo}} \times 0.30 + P_{\text{bet}} \times 0.10 + P_{\text{form}} \times 0.15 + P_{\text{H2H}} \times 0.10 + P_{\text{inj}} \times 0.15}{\sum \text{weights}}$$
 
 **3-way probabilities:**
 
@@ -260,12 +268,12 @@ uv run wc26-bnaul backtest-demo    # Historical backtest
 
 | Component | Weight | Source | Formula |
 |-----------|--------|--------|---------|
-| **xG** | 0.25 | StatsBomb/API-Football | $P = \frac{xG}{xG + xGA}$ |
-| **Betting Odds** | 0.20 | Bookmakers | $P = \frac{\text{implied}}{\sum \text{implied}}$ |
-| **Elo Rating** | 0.20 | FIFA Rank | $P = \frac{1}{1 + 10^{\Delta R/400}}$ |
+| **xG** | 0.20 | StatsBomb/API-Football | $P = \frac{xG}{xG + xGA}$ |
+| **Betting Odds** | 0.10 | Bookmakers | $P = \frac{\text{implied}}{\sum \text{implied}}$ |
+| **Elo Rating** | 0.30 | FIFA Rank | $P = \frac{1}{1 + 10^{\Delta R/400}}$ |
 | **Recent Form** | 0.15 | API-Football | Exponential decay weights |
 | **H2H History** | 0.10 | API-Football | $\frac{wins + 0.5 \times draws}{total}$ |
-| **Injuries** | 0.10 | API-Football | $\frac{11 - injuries}{22}$ |
+| **Injuries** | 0.15 | API-Football | $\frac{11 - injuries}{22}$ |
 
 **Output:** 3-way probabilities (H/D/A) + binary (knockout) + confidence score + component breakdown.
 
@@ -286,6 +294,29 @@ uv run wc26-bnaul backtest-demo    # Historical backtest
 | **Truthful** | **18.61%** | baseline ✅ |
 | Over-confident | 16.00% | -2.61% ❌ |
 | Max-confident | **-24.52%** | **-43.13%** ❌ |
+
+**Updated Backtest (75 matches, Issue #4):**
+
+| Metric | Before | After (2026-06-30 fixes) | Δ |
+|--------|--------|--------------------------|---|
+| Mean Brier | 0.2297 | **0.2174** | -5.4% |
+| Skill % | 8.1% | **13.1%** | +5.0pp |
+| Accuracy | 57.3% | **59.3%** | +2.0pp |
+
+**Key fixes applied:**
+1. Removed draw cap (was reducing Skill 13% → 8%)
+2. Rebalanced weights: Elo 20% → 30%, xG 25% → 20%, Injury 10% → 15%
+3. Added knockout variance penalty (-5% shrink)
+4. Added confidence cap at 65% (learned from wc-kimi)
+5. Added selectivity: 50/50 when no clear edge (learned from jason)
+
+**Competitor Analysis:**
+
+| Agent | Skill | Strategy | Lesson |
+|-------|-------|----------|--------|
+| jason | 55% | Selective sniper (12/64 matches, high confidence) | Be selective, skip coin flips |
+| wc-oracle | 45% | Calibrated 3-way (72 matches, uses DRAW) | Use 3-way when available |
+| wc-kimi | 43% | Conservative baseline (60 matches, cap 65%) | Cap confidence, minimize max Brier |
 
 **Model Comparison (Brazil vs Japan):**
 

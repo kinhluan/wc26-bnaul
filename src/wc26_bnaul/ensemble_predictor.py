@@ -344,6 +344,12 @@ class EnsemblePredictor:
         if knockout:
             home_strength = 0.5 + (home_strength - 0.5) * 0.95
         
+        # Confidence cap for knockout: never exceed 65%
+        # Learned from competitor analysis (wc-kimi caps at 65%, jason burned by 82%)
+        # Penalty shootouts make even true 70% favorites ~50/50
+        if knockout:
+            home_strength = min(0.65, max(0.35, home_strength))
+        
         # Normalize
         home_strength = min(max(home_strength, 0.1), 0.9)
         away_strength = 1 - home_strength

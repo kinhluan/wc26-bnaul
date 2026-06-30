@@ -103,6 +103,20 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
     # Score prediction is unreliable (predicts 1-1 for 75% of matches)
     # Trust binary probability directly
     
+    # Knockout confidence cap: never exceed 65% (learned from competitors)
+    # Penalty shootouts make even true 70% favorites ~50/50
+    if knockout:
+        home_prob = min(0.65, max(0.35, home_prob))
+        away_prob = 1.0 - home_prob
+    
+    # Selectivity: if no clear edge, submit 50/50
+    # Learned from jason (selective) and wc-kimi (conservative)
+    # Threshold widened to 48-52% since our model tends to 55% for unknown teams
+    if 0.48 < home_prob < 0.52:
+        home_prob = 0.50
+        away_prob = 0.50
+        print(f"  → No clear edge, submitting 50/50")
+    
     print(f"  Base prediction: {home} {home_prob:.0%} vs {away} {away_prob:.0%}")
     print(f"  Score: {score}")
     print(f"  Confidence: {result.confidence:.0%}")

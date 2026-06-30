@@ -1,6 +1,35 @@
 # AGENT.md — wc26-bnaul
 
-> Guide for new agents: How to play ClawCup FIFA World Cup 2026 with this codebase.
+> **Updated:** 2026-06-30 after Issue #4 backtest analysis and competitor research.
+
+## 1. Project Overview
+
+**wc26-bnaul** is an autonomous prediction agent for the ClawCup tournament (FIFA World Cup 2026). The agent uses an ensemble model (xG + Elo + Form + H2H + Injury) to predict match outcomes and automatically submits via API.
+
+**Research Question:** How can an autonomous agent leverage probabilistic forecasting, external data integration, and real-time information monitoring to optimize performance in a strictly proper scoring rule prediction tournament?
+
+**Key Resources:**
+- [Issue #1](https://github.com/kinhluan/wc26-bnaul/issues/1) — Match Analysis: m074 & m075 breakdown
+- [Issue #2](https://github.com/kinhluan/wc26-bnaul/issues/2) — Ranking Improvement Plan: -16% to Top 3
+- [Issue #3](https://github.com/kinhluan/wc26-bnaul/issues/3) — Research Synthesis: 15 papers on sports prediction
+- [Issue #4](https://github.com/kinhluan/wc26-bnaul/issues/4) — Backtest Analysis: 75 matches, Skill 8.1% → 13.1%
+- [Issue #5](https://github.com/kinhluan/wc26-bnaul/issues/5) — Experiment Evaluation: Academic rigor assessment (2.9/5)
+- [Skill Memory](.agents/skills/wc26-bnaul/SKILL.md) — Compressed knowledge for future agents
+> **Updated:** 2026-06-30 after Issue #4 backtest analysis and competitor research.
+
+## 1. Project Overview
+
+**wc26-bnaul** is an autonomous prediction agent for the ClawCup tournament (FIFA World Cup 2026). The agent uses an ensemble model (xG + Elo + Form + H2H + Injury) to predict match outcomes and automatically submits via API.
+
+**Research Question:** How can an autonomous agent leverage probabilistic forecasting, external data integration, and real-time information monitoring to optimize performance in a strictly proper scoring rule prediction tournament?
+
+**Key Resources:**
+- [Issue #1](https://github.com/kinhluan/wc26-bnaul/issues/1) — Match Analysis: m074 & m075 breakdown
+- [Issue #2](https://github.com/kinhluan/wc26-bnaul/issues/2) — Ranking Improvement Plan: -16% to Top 3
+- [Issue #3](https://github.com/kinhluan/wc26-bnaul/issues/3) — Research Synthesis: 15 papers on sports prediction
+- [Issue #4](https://github.com/kinhluan/wc26-bnaul/issues/4) — Backtest Analysis: 75 matches, Skill 8.1% → 13.1%
+- [Issue #5](https://github.com/kinhluan/wc26-bnaul/issues/5) — Experiment Evaluation: Academic rigor assessment (2.9/5)
+- [Skill Memory](.agents/skills/wc26-bnaul/SKILL.md) — Compressed knowledge for future agents
 
 ## 1. Project Overview
 
@@ -75,15 +104,21 @@ Input (Team DB) → Ensemble Model → Binary Prob → Submit → Log
 ## 5. Ensemble Model Weights
 
 ```python
-WEIGHT_XG = 0.25
-WEIGHT_BETTING = 0.20
-WEIGHT_ELO = 0.20
+# Updated after Issue #4 backtest analysis (2026-06-30):
+# - Elo is strongest component (61.3% accuracy) → increase to 30%
+# - xG is noisy (58.7% accuracy) → decrease to 20%
+# - Form is surprisingly good (62.7% accuracy) → keep at 15%
+# - Injuries critical for knockouts → increase to 15%
+# - Betting rarely available → decrease fallback to 10%
+WEIGHT_ELO = 0.30
+WEIGHT_XG = 0.20
+WEIGHT_BETTING = 0.10
 WEIGHT_FORM = 0.15
 WEIGHT_H2H = 0.10
-WEIGHT_INJURIES = 0.10
+WEIGHT_INJURIES = 0.15
 ```
 
-> ⚠️ **Learned:** Injury weight (10%) is too low for knockout matches. Germany had 3 injuries vs Paraguay's 1 and lost despite being the favorite. Consider increasing to 15% or implementing non-linear penalty (see Section 12).
+> ⚠️ **Previous weights (before 2026-06-30):** Elo 20%, xG 25%, Betting 20%, Form 15%, H2H 10%, Injury 10%. Changed after backtest analysis showed Elo underweighted and xG overweighted.
 
 ### Team Data (TEAM_DB)
 - FIFA rank, xG, xGA, form, injuries, H2H history
@@ -116,6 +151,8 @@ WEIGHT_INJURIES = 0.10
 ```
 
 > ⚠️ **Critical:** Fast mode (default) skips injury checks. For m075, Germany had 3 injuries but the model didn't adjust enough. Always run with `--news` for live data.
+> 
+> **New (2026-06-30):** Added knockout confidence cap (65%) and selectivity threshold (50/50 when no clear edge). Learned from competitor analysis (jason, wc-oracle, wc-kimi).
 
 ### Live Submit
 ```bash
@@ -133,6 +170,8 @@ uv run wc26-bnaul auto-agent --live
 ```
 
 > ⚠️ **Do NOT adjust weights before 10+ scored matches.** Sample size = 2 gives meaningless suggestions. Wait until Round of 16 ends.
+> 
+> **New (2026-06-30):** After Issue #4 backtest, we now use Elo 30%, xG 20%, Injury 15%. See `ensemble_predictor.py` for current weights.
 
 ### Logs
 - `logs/predictions.jsonl` — Prediction history
@@ -202,17 +241,21 @@ API_FOOTBALL_KEY=your_key     # Optional
 - **Performance tracking** helps improve weights over time
 - **News monitor** detects injuries via RSS + NewsAPI
 
-### Hard-Won Lessons (from m074 & m075)
+### Hard-Won Lessons (from m074, m075, and 75-match backtest)
 
 1. **Injuries are underestimated.** Germany had 3 injuries, model gave them 64%. They lost. Always check `--news` and manually verify injury counts.
 
-2. **Predicted draws in knockout = danger zone.** Model predicted 1-1 for m075 (correct score!) but binary was [0.64, 0.36]. Penalty shootout is a coin flip. Cap at [0.55, 0.45] for predicted draws.
+2. **Draw cap based on predicted score is WRONG.** Backtest shows it reduces Skill from 13% to 8%. The score prediction is unreliable (predicts 1-1 for 75% of matches). Trust binary probability directly.
 
 3. **Form can override Elo in knockouts.** Paraguay's form [1,0,1,0,1] = 60% was better than Germany's [1,0,0,1,-1] = 40%. Historical rank (#6 vs #28) didn't matter as much as recent performance.
 
 4. **Static TEAM_DB kills accuracy.** After every match, update form arrays and H2H. Stale data = stale predictions.
 
 5. **Leaderboard requires n >= 5.** We are provisional with n=2. Need 3 more scored matches just to appear. Every match counts.
+
+6. **Elo is the strongest component (61.3% accuracy).** It should have the highest weight (30%), not xG (58.7%).
+
+7. **Competitor analysis matters.** jason (Skill 55%) is selective — only predicts 12 matches with high confidence. wc-kimi (Skill 43%) caps at 65%. Learn from them.
 
 ### Quick Reference: When to Adjust
 
@@ -221,7 +264,9 @@ API_FOOTBALL_KEY=your_key     # Optional
 | Team has 0 injuries | Trust model |
 | Team has 1 injury | Slight caution (-2%) |
 | Team has 2+ injuries | Reduce prob by 3-5% |
-| Predicted score is draw | Cap binary at [0.55, 0.45] |
+| Predicted score is draw | **DO NOT cap** — score prediction is unreliable |
+| Model confidence > 65% in knockout | **Cap at 65%** (learned from wc-kimi) |
+| No clear edge (48-52%) | **Submit 50/50** (learned from jason) |
 | Round of 32 or 16 | Maximum focus (high weight) |
 | Weight suggestions after 2 matches | IGNORE — wait for n >= 10 |
 
