@@ -25,7 +25,11 @@ from typing import Dict, List, Optional, Tuple
 sys.path.insert(0, "src")
 
 from wc26_bnaul import api_request
-from wc26_bnaul.ensemble_predictor import EnsemblePredictor, MatchPrediction
+from wc26_bnaul.ensemble_predictor import (
+    EnsemblePredictor, MatchPrediction,
+    KNOCKOUT_CONFIDENCE_CAP, KNOCKOUT_CONFIDENCE_FLOOR,
+    SELECTIVITY_THRESHOLD_LOW, SELECTIVITY_THRESHOLD_HIGH,
+)
 from wc26_bnaul.batch_predict import get_team_data, TEAM_DB, get_venue_data, VENUE_DB
 from wc26_bnaul.prediction_logger import PredictionLogger
 from wc26_bnaul.news_monitor_real import (
@@ -579,15 +583,31 @@ class AgentReasoningLoop:
         home_prob = binary[0]
         away_prob = binary[1]
         
-        # Apply selectivity: if no clear edge, submit 50/50
-        if 0.48 < home_prob < 0.52:
+        # Principle 3: SELECTIVITY — if no clear edge, submit 50/50
+        # Learned from jason (55% SKILL): selective submission beats overconfidence
+        # Threshold: 48-52% means no meaningful edge — better to admit uncertainty
+        if SELECTIVITY_THRESHOLD_LOW < home_prob < SELECTIVITY_THRESHOLD_HIGH:
             home_prob = 0.50
             away_prob = 0.50
-            selectivity_note = "No clear edge → 50/50"
+            selectivity_note = "No clear edge → 50/50 (Principle 3: Selectivity)"
         else:
             selectivity_note = "Clear edge detected"
         
-        # Apply uncertainty bounds from meta-analysis
+        # Principle 2: KNOCKOUT CAP 65% — already applied in ensemble_predictor
+        # but double-check here for safety
+        # All matches in auto-agent are knockout (WC2026 bracket)
+        is_knockout = True
+        if is_knockout:
+            if home_prob > KNOCKOUT_CONFIDENCE_CAP:
+                home_prob = KNOCKOUT_CONFIDENCE_CAP
+                away_prob = 1.0 - home_prob
+                selectivity_note += f" (capped at {KNOCKOUT_CONFIDENCE_CAP:.0%} — Principle 2)"
+            elif home_prob < KNOCKOUT_CONFIDENCE_FLOOR:
+                home_prob = KNOCKOUT_CONFIDENCE_FLOOR
+                away_prob = 1.0 - home_prob
+                selectivity_note += f" (floored at {KNOCKOUT_CONFIDENCE_FLOOR:.0%} — Principle 2)"
+        
+        # Apply uncertainty bounds from meta-analysis (additional safety)
         lower_bound, upper_bound = self.uncertainty_bounds
         if home_prob < lower_bound:
             home_prob = lower_bound
@@ -597,6 +617,14 @@ class AgentReasoningLoop:
             home_prob = upper_bound
             away_prob = 1.0 - home_prob
             selectivity_note += f" (clamped to upper bound {upper_bound:.0%})"
+        
+        # Principle 1: TRUTHFUL SUBMISSION — log the true belief before any adjustment
+        # The ensemble model already produces our true belief; we only apply
+        # principled adjustments (cap, selectivity) that improve Brier score
+        true_belief = binary[0]  # Before any adjustment
+        adjustment = home_prob - true_belief
+        if abs(adjustment) > 0.01:
+            print(f"  → Adjustment: {adjustment:+.1%} (true belief {true_belief:.0%} → submitted {home_prob:.0%})")
         
         # Final decision: should we submit?
         # Skip if uncertainty is too high (bounds are 45-55)

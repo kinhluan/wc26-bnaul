@@ -45,6 +45,30 @@ from dataclasses import dataclass
 # CONSTANTS
 # =============================================================================
 
+# =============================================================================
+# SKILL OPTIMIZATION: 4 Core Principles
+# =============================================================================
+#
+# 1. TRUTHFUL SUBMISSION: Always submit your true belief probability
+#    Brier is strictly proper scoring rule — truthful is optimal
+#    Never "game" the system by submitting different from your belief
+#
+# 2. KNOCKOUT CAP 65%: Penalty shootouts make even 70% favorites ~50/50
+#    Learned from: wc-kimi (caps 65%), jason (burned by 82%)
+#    Applied in: predict() method with min(0.65, max(0.35, home_strength))
+#
+# 3. SELECTIVITY: If no clear edge (48-52%), submit 50/50
+#    Learned from: jason (selective, 55% SKILL)
+#    Applied in: auto_agent.py with selectivity threshold
+#
+# 4. ELO-BASED: Use real ELO ratings (not FIFA rank approximation)
+#    ELO accounts for opponent strength, FIFA rank doesn't
+#    Source: Amir Motefaker dataset (1698-2045 range)
+#    Applied in: _elo_component() with standard ELO formula
+#
+# Reference: docs/01_STRATEGY.md for mathematical proof
+# =============================================================================
+
 # Ensemble weights (calibrated on historical data + Amir Motefaker dataset)
 # Updated after Issue #4 backtest + Amir dataset integration:
 # - ELO rating (from Amir dataset) is strongest predictor → 30%
@@ -66,6 +90,14 @@ WEIGHT_INJURIES = 0.10
 
 # Total: 1.10 (when betting available, renormalize)
 # When betting NOT available: total = 1.00 (perfect)
+
+# SKILL Optimization constants
+KNOCKOUT_CONFIDENCE_CAP = 0.65  # Never exceed 65% in knockouts (penalty factor)
+KNOCKOUT_CONFIDENCE_FLOOR = 0.35  # Never below 35% (upset risk)
+KNOCKOUT_VARIANCE_PENALTY = 0.95  # Shrink toward 0.50 by 5%
+SELECTIVITY_THRESHOLD_LOW = 0.48  # If prob < 48%, consider 50/50
+SELECTIVITY_THRESHOLD_HIGH = 0.52  # If prob > 52%, consider 50/50
+HOME_ADVANTAGE_BOOST = 0.05  # 5% home advantage (neutral venue adjusted)
 
 # Elo parameters
 ELO_K = 32
@@ -174,12 +206,15 @@ class EnsemblePredictor:
         """
         Elo-based probability using actual ELO ratings from Amir dataset.
         
+        Principle 4: ELO-BASED — Use real ELO ratings, not FIFA rank approximation.
+        ELO accounts for opponent strength; FIFA rank does not.
+        
         If ELO ratings provided (home_elo, away_elo > 0), use them directly.
         Otherwise, fall back to FIFA rank-based approximation.
         """
         if home_elo > 0 and away_elo > 0:
             # Use actual ELO ratings (from Amir dataset)
-            # Standard ELO expected score formula
+            # Standard ELO expected score formula: 1 / (1 + 10^((Rb-Ra)/400))
             home_strength = 1 / (1 + 10 ** ((away_elo - home_elo) / ELO_SCALE))
             return home_strength
         
@@ -399,21 +434,26 @@ class EnsemblePredictor:
             betting_prob * betting_weight
         ) / total_weight
         
-        # Add home advantage
+        # Add home advantage (Principle 1: Truthful — home advantage is real)
         if home_advantage:
-            home_strength += 0.05
+            home_strength += HOME_ADVANTAGE_BOOST
         
-        # Knockout variance penalty: shrink toward 0.50 by 5%
+        # Knockout variance penalty (Principle 2: Cap 65%)
         # Research (Tactiq 2026): single-elimination has higher variance
         # Teams play more conservatively, upsets are more common
         if knockout:
-            home_strength = 0.5 + (home_strength - 0.5) * 0.95
+            home_strength = 0.5 + (home_strength - 0.5) * KNOCKOUT_VARIANCE_PENALTY
         
-        # Confidence cap for knockout: never exceed 65%
-        # Learned from competitor analysis (wc-kimi caps at 65%, jason burned by 82%)
+        # Confidence cap for knockout (Principle 2: Cap 65%)
         # Penalty shootouts make even true 70% favorites ~50/50
+        # Learned from competitor analysis (wc-kimi caps at 65%, jason burned by 82%)
         if knockout:
-            home_strength = min(0.65, max(0.35, home_strength))
+            home_strength = min(KNOCKOUT_CONFIDENCE_CAP, max(KNOCKOUT_CONFIDENCE_FLOOR, home_strength))
+        
+        # Principle 3: Selectivity — if no clear edge, submit 50/50
+        # This is applied AFTER ensemble but BEFORE final output
+        # In auto_agent.py, we check: if 0.48 < prob < 0.52 → 50/50
+        # Here we just ensure the raw probability is reasonable
         
         # Normalize
         home_strength = min(max(home_strength, 0.1), 0.9)
