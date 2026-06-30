@@ -455,6 +455,26 @@ class EnsemblePredictor:
             betting_prob * betting_weight
         ) / total_weight
         
+        # AGGRESSIVE CONSERVATISM: Shrink predictions toward 50%
+        # Learned from simulation: selective prediction beats always-predict
+        # If model says 60%, submit 55%. If 55%, submit 50/50.
+        # This compensates for model overconfidence in knockout.
+        # 
+        # BUT: For matches with CLEAR edge (ELO gap > 200), trust the model more
+        # For close matches (ELO gap < 150), be very conservative
+        if home_elo > 0 and away_elo > 0:
+            elo_gap = abs(home_elo - away_elo)
+            if elo_gap > 200:
+                conservative_shrink = 0.95  # Small shrink for clear favorites
+            elif elo_gap > 100:
+                conservative_shrink = 0.85  # Medium shrink
+            else:
+                conservative_shrink = 0.70  # Large shrink for close matches
+        else:
+            conservative_shrink = 0.85  # Default
+        
+        home_strength = 0.5 + (home_strength - 0.5) * conservative_shrink
+        
         # Add home advantage (Principle 1: Truthful — home advantage is real)
         if home_advantage:
             home_strength += HOME_ADVANTAGE_BOOST
