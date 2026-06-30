@@ -1,0 +1,61 @@
+{
+  "total_predictions": 62,
+  "total_results": 2,
+  "matches_with_results": 4,
+  "brier_scores": [
+    0.16810000000000003,
+    0.34809999999999997,
+    0.16810000000000003,
+    0.34809999999999997
+  ],
+  "rps_scores": [],
+  "weighted_rps": [],
+  "by_round": {
+    "": {
+      "count": 4,
+      "brier_sum": 1.0324,
+      "rps_sum": 0,
+      "mean_brier": 0.2581,
+      "mean_rps": 0
+    }
+  },
+  "by_component": {
+    "elo": {
+      "correct": 2,
+      "total": 4,
+      "brier_sum": 1.1048000000000002,
+      "accuracy": 0.5,
+      "mean_brier": 0.27620000000000006
+    },
+    "xg": {
+      "correct": 2,
+      "total": 4,
+      "brier_sum": 1.0888,
+      "accuracy": 0.5,
+      "mean_brier": 0.2722
+    },
+    "form": {
+      "correct": 2,
+      "total": 4,
+      "brier_sum": 1.0282,
+      "accuracy": 0.5,
+      "mean_brier": 0.25705
+    },
+    "h2h": {
+      "correct": 0,
+      "total": 4,
+      "brier_sum": 1.0,
+      "accuracy": 0.0,
+      "mean_brier": 0.25
+    },
+    "injury": {
+      "correct": 0,
+      "total": 4,
+      "brier_sum": 1.0,
+      "accuracy": 0.0,
+      "mean_brier": 0.25
+    }
+  },
+  "mean_brier": 0.2581,
+  "skill_pct": -3.2399999999999984
+}
