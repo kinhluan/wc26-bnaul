@@ -18,9 +18,10 @@ Usage:
 
 import argparse
 import json
+import re
 import sys
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
 sys.path.insert(0, "src")
@@ -32,7 +33,6 @@ from wc26_bnaul.ensemble_predictor import (
     SELECTIVITY_THRESHOLD_LOW, SELECTIVITY_THRESHOLD_HIGH,
 )
 from wc26_bnaul.batch_predict import get_team_data, get_venue_data
-from wc26_bnaul.json_db import load_json_db
 from wc26_bnaul.prediction_logger import PredictionLogger
 from wc26_bnaul.news_monitor_real import (
     search_news_for_teams,
@@ -110,9 +110,6 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
             except Exception:
                 pass
             
-            # parse
-            import re
-            
             # try to find ADJUSTMENT: -X.X
             adj_match = re.search(r'ADJUSTMENT:\s*([+-]?\d+(?:\.\d+)?)', raw_input, flags=re.IGNORECASE)
             adjustment = float(adj_match.group(1)) if adj_match else 0.0
@@ -186,7 +183,6 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
         adjustment = _parse_adjustment_from_text(llm_response)
         
         # Bóc tách lời giải thích (lấy phần text sau chữ ADJUSTMENT)
-        import re
         reasoning = "Không có lời giải thích cụ thể."
         parts = re.split(r'ADJUSTMENT:\s*[+-]?\d+(?:\.\d+)?%?', llm_response, flags=re.IGNORECASE)
         if len(parts) > 1 and parts[-1].strip():
@@ -234,7 +230,6 @@ def _parse_adjustment_from_text(text: str) -> float:
     Parse giá trị ADJUSTMENT từ text.
     Tìm pattern 'ADJUSTMENT: [value]' hoặc '[+-]number'.
     """
-    import re
     # Tìm pattern ADJUSTMENT: [value]
     match = re.search(r"ADJUSTMENT:\s*([+-]?\d+\.?\d*)", text, re.IGNORECASE)
     if match:
@@ -360,30 +355,6 @@ IMPORTANT: Be conservative. Small adjustments are better than large ones. When i
 # =============================================================================
 # ENVIRONMENTAL DATA SOURCES
 # =============================================================================
-
-# WC 2026 venue data (stadium, city, altitude, typical temperature)
-WC2026_VENUES = {
-    # USA venues
-    "MetLife Stadium": {"city": "New York", "altitude_m": 3, "avg_temp_c": 22, "country": "USA"},
-    "SoFi Stadium": {"city": "Los Angeles", "altitude_m": 30, "avg_temp_c": 24, "country": "USA"},
-    "AT&T Stadium": {"city": "Dallas", "altitude_m": 170, "avg_temp_c": 28, "country": "USA"},
-    "Mercedes-Benz Stadium": {"city": "Atlanta", "altitude_m": 300, "avg_temp_c": 26, "country": "USA"},
-    "Hard Rock Stadium": {"city": "Miami", "altitude_m": 3, "avg_temp_c": 29, "country": "USA"},
-    "Levi's Stadium": {"city": "San Francisco", "altitude_m": 5, "avg_temp_c": 18, "country": "USA"},
-    "Lumen Field": {"city": "Seattle", "altitude_m": 50, "avg_temp_c": 16, "country": "USA"},
-    "Gillette Stadium": {"city": "Boston", "altitude_m": 50, "avg_temp_c": 20, "country": "USA"},
-    "Lincoln Financial Field": {"city": "Philadelphia", "altitude_m": 12, "avg_temp_c": 23, "country": "USA"},
-    "NRG Stadium": {"city": "Houston", "altitude_m": 15, "avg_temp_c": 30, "country": "USA"},
-    "Soldier Field": {"city": "Chicago", "altitude_m": 180, "avg_temp_c": 21, "country": "USA"},
-    "Bank of America Stadium": {"city": "Charlotte", "altitude_m": 220, "avg_temp_c": 25, "country": "USA"},
-    # Canada venues
-    "BC Place": {"city": "Vancouver", "altitude_m": 2, "avg_temp_c": 15, "country": "Canada"},
-    "BMO Field": {"city": "Toronto", "altitude_m": 77, "avg_temp_c": 19, "country": "Canada"},
-    # Mexico venues
-    "Estadio Azteca": {"city": "Mexico City", "altitude_m": 2240, "avg_temp_c": 18, "country": "Mexico"},
-    "Estadio Akron": {"city": "Guadalajara", "altitude_m": 1545, "avg_temp_c": 22, "country": "Mexico"},
-    "Estadio BBVA": {"city": "Monterrey", "altitude_m": 512, "avg_temp_c": 26, "country": "Mexico"},
-}
 
 # Team continent mapping (for travel fatigue estimation)
 TEAM_CONTINENT = {
