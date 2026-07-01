@@ -61,6 +61,7 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
     - Mặc định (dry_run=False, cli_mode=False): Gọi API thật (nếu đã cài
       openai/kimi client), nếu chưa có thì fallback về 0.0.
     """
+    # 2. CLI mode (external agent pipe mode) — CHECK FIRST before ask-agent
     if cli_mode:
         # In toàn bộ prompt ra stdout để CLI agent (kimi-cli, v.v.) đọc
         print(f"\n{'='*60}")
@@ -85,6 +86,66 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
         print(f"[CLI MODE] Parsed adjustment: {adjustment:+.1f}%")
         return adjustment
 
+    # 1. Copy-Paste manual (ask-agent) mode — only if NOT cli_mode
+    if "--ask-agent" in sys.argv or "--ask-kimi" in sys.argv:
+        print(f"\n{'='*60}")
+        print(f"🤖 LLM PROMPT (Hãy copy nội dung dưới đây dán vào ChatGPT/Kimi/Claude):")
+        print(f"{'='*60}")
+        print(prompt)
+        print(f"{'='*60}")
+        
+        while True:
+            print("\n📝 Dán câu trả lời của AI vào đây (Nhấn Ctrl+D / Ctrl+Z ở dòng mới khi dán xong):")
+            try:
+                raw_input = sys.stdin.read()
+                try:
+                    sys.stdin = open('/dev/tty')
+                except OSError:
+                    pass
+            except KeyboardInterrupt:
+                print("\n[ASK AGENT] Interrupted. Returning 0.0")
+                return 0.0
+            except EOFError:
+                return 0.0
+            except Exception:
+                pass
+            
+            # parse
+            import re
+            
+            # try to find ADJUSTMENT: -X.X
+            adj_match = re.search(r'ADJUSTMENT:\s*([+-]?\d+(?:\.\d+)?)', raw_input, flags=re.IGNORECASE)
+            adjustment = float(adj_match.group(1)) if adj_match else 0.0
+            
+            reasoning = "Không có lời giải thích cụ thể."
+            parts = re.split(r'ADJUSTMENT:\s*[+-]?\d+(?:\.\d+)?%?', raw_input, flags=re.IGNORECASE)
+            if parts and parts[0].strip():
+                clean_reasoning = parts[0].strip().replace('\n', ' ').strip()
+                reasoning = clean_reasoning[:300] + ("..." if len(clean_reasoning) > 300 else "")
+            
+            print(f"\n{'='*60}")
+            print(f"🤖 [KIMI TƯ VẤN - QUA BẢN TEXT BẠN PASTE]")
+            print(f"💡 Nhận định: {reasoning}")
+            print(f"🎯 Chốt số: Điều chỉnh {adjustment:+.1f}%")
+            print(f"{'='*60}")
+            
+            while True:
+                try:
+                    val = input(f"👉 Bạn có chốt con số {adjustment:+.1f}% này không? [Nhập số khác để Override / Nhấn Enter để Đồng ý]: ").strip()
+                    if not val:
+                        print(f"✅ Đã chốt: {adjustment:+.1f}%")
+                        return adjustment
+                    override_adj = float(val.replace("%", ""))
+                    print(f"✅ Đã ghi đè thành: {override_adj:+.1f}%")
+                    return override_adj
+                except ValueError:
+                    print("❌ Lỗi: Vui lòng nhập một số hợp lệ (ví dụ: -2.5 hoặc 1.0)")
+                except KeyboardInterrupt:
+                    print("\n[ASK AGENT] Interrupted. Returning 0.0")
+                    return 0.0
+                except EOFError:
+                    return adjustment
+
     if dry_run:
         print(f"\n{'='*60}")
         print("LLM PROMPT (dry_run — would send to API):")
@@ -99,57 +160,6 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
     # Thử gọi API nếu đã cài thư viện openai
     try:
         import os
-        # Nếu có cờ --ask-agent (hoặc --ask-kimi cũ), dùng cơ chế Copy-Paste thủ công (Human-in-the-loop)
-        if "--ask-agent" in sys.argv or "--ask-kimi" in sys.argv:
-            print(f"\n{'='*60}")
-            print(f"🤖 LLM PROMPT (Hãy copy nội dung dưới đây dán vào ChatGPT/Kimi/Claude):")
-            print(f"{'='*60}")
-            print(prompt)
-            print(f"{'='*60}")
-            
-            while True:
-                print("\n📝 Dán câu trả lời của AI vào đây (Nhấn Ctrl+D / Ctrl+Z ở dòng mới khi dán xong):")
-                try:
-                    raw_input = sys.stdin.read()
-                    # Reset stdin để có thể dùng input() ở bước sau
-                    try:
-                        sys.stdin = open('/dev/tty')
-                    except OSError:
-                        pass # Headless environment, skip TTY reset
-                except KeyboardInterrupt:
-                    print("\n[ASK AGENT] Interrupted. Returning 0.0")
-                    return 0.0
-                except Exception:
-                    pass
-                
-                adjustment = _parse_adjustment_from_text(raw_input)
-                
-                # Bóc tách lời giải thích (lấy phần text sau chữ ADJUSTMENT) từ đoạn text bạn vừa Paste
-                import re
-                reasoning = "Không có lời giải thích cụ thể."
-                parts = re.split(r'ADJUSTMENT:\s*[+-]?\d+(?:\.\d+)?%?', raw_input, flags=re.IGNORECASE)
-                if len(parts) > 1 and parts[-1].strip():
-                    clean_reasoning = parts[-1].strip().replace('\n', ' ').strip()
-                    reasoning = clean_reasoning[:200] + ("..." if len(clean_reasoning) > 200 else "")
-                
-                print(f"\n{'='*60}")
-                print(f"🤖 [KIMI TƯ VẤN - QUA BẢN TEXT BẠN PASTE]")
-                print(f"💡 Nhận định: {reasoning}")
-                print(f"🎯 Chốt số: Điều chỉnh {adjustment:+.1f}%")
-                print(f"{'='*60}")
-                
-                while True:
-                    try:
-                        val = input(f"👉 Bạn có chốt con số {adjustment:+.1f}% này không? [Nhập số khác để Override / Nhấn Enter để Đồng ý]: ").strip()
-                        if not val:
-                            print(f"✅ Đã chốt: {adjustment:+.1f}%")
-                            return adjustment
-                        override_adj = float(val.replace("%", ""))
-                        print(f"✅ Đã ghi đè thành: {override_adj:+.1f}%")
-                        return override_adj
-                    except ValueError:
-                        print("❌ Lỗi: Vui lòng nhập một số hợp lệ (ví dụ: -2.5 hoặc 1.0)")
-                        
         # Nếu có API Key, dùng chế độ API tự động (Production / --interactive)
         api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("KIMI_API_KEY")
         if not api_key:
