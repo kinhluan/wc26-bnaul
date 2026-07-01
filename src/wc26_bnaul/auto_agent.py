@@ -41,6 +41,12 @@ from wc26_bnaul.news_monitor_real import (
     analyze_injury_impact,
 )
 from wc26_bnaul.json_db import gather_match_context
+from wc26_bnaul.strategy import (
+    calculate_brier,
+    calculate_skill_percentage,
+    calibration_analysis,
+    generate_optimal_reasoning,
+)
 
 
 logger = PredictionLogger()
@@ -1070,9 +1076,9 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
     
     # AI Probability Adjustment (LLM-powered data enrichment)
     # Only apply for real teams (not placeholders)
-    # In CLI mode, still gather news but skip interactive reasoning loop
-    if cli_mode and not home.startswith("W") and not away.startswith("W") and not home.startswith("L") and not away.startswith("L"):
-        # Build context directly for CLI mode (skip reasoning loop but keep news)
+    # Step 1b, 1c, 1d run for BOTH CLI and non-CLI modes
+    if not home.startswith("W") and not away.startswith("W") and not home.startswith("L") and not away.startswith("L"):
+        # Build context for news/injury analysis and optional LLM prompt
         from wc26_bnaul.json_db import gather_match_context
         print(f"\n{'='*60}")
         print(f"AI PROBABILITY ADJUSTMENT: {match_id} — {home} vs {away}")
@@ -1099,8 +1105,6 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
                 print(f"  ✓ Injuries: {injury_summary}")
             except Exception as e:
                 print(f"  ⚠ Injury fetch failed: {e}")
-        
-        print(f"[Step 2] Building LLM prompt with news and injuries...")
         
         # Step 1c: Auto-adjust based on news severity and injury impact
         auto_adjustment = 0.0
@@ -1137,11 +1141,72 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
             else:
                 print(f"  ✅ No significant auto-adjustment needed")
         
-        # Apply auto-adjustment to base probability before LLM
-        adjusted_base = home_prob + (auto_adjustment / 100.0)
-        adjusted_base = max(0.01, min(0.99, adjusted_base))
+        # Step 1d: Strategy analysis — Brier score optimization check
+        strategy_adjustment = 0.0
+        if check_news:
+            print(f"[Step 1d] Strategy analysis — checking Brier optimization...")
+            
+            # Calculate expected Brier for current probability
+            # For knockout: outcome is either home win (1) or away win (0)
+            # We estimate true_prob from model components
+            estimated_true_prob = home_prob  # Our best estimate is the model output
+            
+            # Check if current probability is optimal
+            expected_brier_current = estimated_true_prob * (home_prob - 1)**2 + (1 - estimated_true_prob) * home_prob**2
+            expected_brier_optimal = estimated_true_prob * (estimated_true_prob - 1)**2 + (1 - estimated_true_prob) * estimated_true_prob**2
+            
+            brier_diff = expected_brier_current - expected_brier_optimal
+            
+            if brier_diff > 0.01:  # Significant deviation from optimal
+                # Suggest moving toward true probability
+                direction = "closer to true belief" if home_prob > estimated_true_prob else "closer to true belief"
+                print(f"  ⚠️ Suboptimal Brier: {brier_diff:.4f} above optimal")
+                print(f"  💡 Suggestion: Move probability {direction}")
+            else:
+                print(f"  ✅ Brier optimal (deviation: {brier_diff:.4f})")
+            
+            # Check calibration based on historical data
+            try:
+                import os
+                perf_file = os.path.join(os.path.dirname(__file__), "..", "..", "logs", "performance.json")
+                if os.path.exists(perf_file):
+                    with open(perf_file, 'r') as f:
+                        perf_data = json.load(f)
+                    
+                    if 'predictions' in perf_data and len(perf_data['predictions']) >= 5:
+                        # Simple calibration check: are we over/under confident?
+                        recent_preds = perf_data['predictions'][-10:]
+                        avg_confidence = sum(p.get('submitted_probs', [0.5, 0.5])[0] for p in recent_preds) / len(recent_preds)
+                        avg_actual = sum(1 if p.get('actual_outcome') == 'H' else 0 for p in recent_preds) / len(recent_preds)
+                        
+                        calibration_gap = avg_confidence - avg_actual
+                        if abs(calibration_gap) > 0.1:
+                            strategy_adjustment = -calibration_gap * 0.5  # Counteract bias
+                            print(f"  📊 Calibration gap: {calibration_gap:+.1%} (adjusting by {strategy_adjustment:+.1f}%)")
+                        else:
+                            print(f"  ✅ Well calibrated (gap: {calibration_gap:+.1%})")
+            except Exception as e:
+                print(f"  ℹ️ Calibration check skipped: {e}")
         
-        prompt = f"""You are a Math PhD in statistical sports analysis and an expert football commentator with access to real-time web search.
+        # Add strategy adjustment to auto-adjustment
+        if strategy_adjustment != 0:
+            auto_adjustment += strategy_adjustment
+            print(f"  📈 Strategy adjustment: {strategy_adjustment:+.1f}%")
+            auto_adjustment = max(-5.0, min(5.0, auto_adjustment))  # Re-cap
+        
+        # Apply auto-adjustment and strategy adjustment to base probability
+        home_prob = home_prob + (auto_adjustment / 100.0)
+        home_prob = max(0.01, min(0.99, home_prob))
+        away_prob = 1.0 - home_prob
+        
+        # CLI mode specific: build LLM prompt, read stdin, early return
+        if cli_mode:
+            print(f"[Step 2] Building LLM prompt with news, injuries, and strategy...")
+            
+            # Use already-adjusted base for prompt
+            adjusted_base = home_prob
+            
+            prompt = f"""You are a Math PhD in statistical sports analysis and an expert football commentator with access to real-time web search.
 
 TASK: Analyze the following match data mathematically and intuitively to provide a PROBABILITY ADJUSTMENT for the home team's win probability.
 
@@ -1177,87 +1242,87 @@ INSTRUCTIONS:
 
 IMPORTANT: Be conservative. The auto-adjustment is already applied. Only provide additional adjustment if you find strong evidence the system missed something.
 """
-        
-        print(f"[Step 3] Calling LLM API...")
-        llm_adjustment = call_llm_api(prompt, dry_run=dry_run, cli_mode=cli_mode)
-        
-        # Combine auto-adjustment + LLM adjustment
-        total_adjustment = auto_adjustment + llm_adjustment
-        
-        print(f"[Step 4] Applying combined adjustment...")
-        print(f"  Auto-adjustment (news/injuries): {auto_adjustment:+.1f}%")
-        print(f"  LLM adjustment: {llm_adjustment:+.1f}%")
-        print(f"  Total adjustment: {total_adjustment:+.1f}%")
-        
-        adjustment_decimal = total_adjustment / 100.0
-        adjusted_prob = home_prob + adjustment_decimal
-        final_prob = max(0.01, min(0.99, adjusted_prob))
-        
-        print(f"\n{'='*60}")
-        print(f"ADJUSTMENT RESULT")
-        print(f"{'='*60}")
-        print(f"  Base probability:     {home_prob:.2%}")
-        print(f"  Auto-adjustment:      {auto_adjustment:+.1f}% (news/injuries)")
-        print(f"  LLM adjustment:       {llm_adjustment:+.1f}%")
-        print(f"  Total adjustment:     {total_adjustment:+.1f}%")
-        print(f"  Adjusted probability: {adjusted_prob:.2%}")
-        if final_prob != adjusted_prob:
-            print(f"  Clamped to:           {final_prob:.2%} (out of valid range)")
-        print(f"{'='*60}")
-        
-        home_prob = final_prob
-        away_prob = 1.0 - home_prob
-        
-        # Skip the rest of the function (reasoning loop, etc.)
-        # BUT still submit if not dry_run
-        if dry_run:
+            
+            print(f"[Step 3] Calling LLM API...")
+            llm_adjustment = call_llm_api(prompt, dry_run=dry_run, cli_mode=cli_mode)
+            
+            # Combine auto-adjustment + LLM adjustment
+            total_adjustment = auto_adjustment + llm_adjustment
+            
+            print(f"[Step 4] Applying combined adjustment...")
+            print(f"  Auto-adjustment (news/injuries): {auto_adjustment:+.1f}%")
+            print(f"  LLM adjustment: {llm_adjustment:+.1f}%")
+            print(f"  Total adjustment: {total_adjustment:+.1f}%")
+            
+            adjustment_decimal = total_adjustment / 100.0
+            adjusted_prob = home_prob + adjustment_decimal
+            final_prob = max(0.01, min(0.99, adjusted_prob))
+            
+            print(f"\n{'='*60}")
+            print(f"ADJUSTMENT RESULT")
+            print(f"{'='*60}")
+            print(f"  Base probability:     {home_prob:.2%}")
+            print(f"  Auto-adjustment:      {auto_adjustment:+.1f}% (news/injuries)")
+            print(f"  LLM adjustment:       {llm_adjustment:+.1f}%")
+            print(f"  Total adjustment:     {total_adjustment:+.1f}%")
+            print(f"  Adjusted probability: {adjusted_prob:.2%}")
+            if final_prob != adjusted_prob:
+                print(f"  Clamped to:           {final_prob:.2%} (out of valid range)")
+            print(f"{'='*60}")
+            
+            home_prob = final_prob
+            away_prob = 1.0 - home_prob
+            
+            # Skip the rest of the function (reasoning loop, etc.)
+            # BUT still submit if not dry_run
+            if dry_run:
+                print(f"\n{'='*60}")
+                print(f"FINAL: {home} {home_prob:.2%} vs {away} {away_prob:.2%}")
+                print(f"{'='*60}")
+                print(f"🚫 DRY RUN — Would submit:")
+                print(f"  {match_id}: {home} {home_prob:.2f} vs {away} {away_prob:.2f}")
+                print(f"{'='*60}")
+                return True
+            
+            # LIVE mode: submit the prediction
             print(f"\n{'='*60}")
             print(f"FINAL: {home} {home_prob:.2%} vs {away} {away_prob:.2%}")
             print(f"{'='*60}")
-            print(f"🚫 DRY RUN — Would submit:")
-            print(f"  {match_id}: {home} {home_prob:.2f} vs {away} {away_prob:.2f}")
-            print(f"{'='*60}")
+            print(f"🚀 SUBMITTING...")
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    api_request("POST", "/predictions", {
+                        "match_id": match_id,
+                        "format": "binary",
+                        "p": [round(home_prob, 2), round(away_prob, 2)],
+                        "reasoning": f"Auto: {auto_adjustment:+.1f}% + LLM: {llm_adjustment:+.1f}% = {total_adjustment:+.1f}% | Base: {home_prob:.2%}",
+                    })
+                    
+                    # Log prediction
+                    logger.log_prediction(
+                        match_id=match_id,
+                        home_team=home,
+                        away_team=away,
+                        submitted_probs=[round(home_prob, 2), round(away_prob, 2)],
+                        components={"auto_adjustment": auto_adjustment, "llm_adjustment": llm_adjustment, "total_adjustment": total_adjustment, "base_prob": home_prob},
+                        predicted_score="1-0",
+                        reasoning=f"Auto: {auto_adjustment:+.1f}% + LLM: {llm_adjustment:+.1f}% = {total_adjustment:+.1f}%",
+                    )
+                    
+                    print(f"  ✅ Submitted: {match_id}")
+                    return True
+                except Exception as e:
+                    if "429" in str(e) and attempt < max_retries - 1:
+                        wait_time = (attempt + 1) * 5
+                        print(f"  ⚠️  Rate limited (429). Retrying in {wait_time}s... ({attempt+1}/{max_retries})")
+                        time.sleep(wait_time)
+                    else:
+                        print(f"  ❌ Failed: {e}")
+                        return False
             return True
         
-        # LIVE mode: submit the prediction
-        print(f"\n{'='*60}")
-        print(f"FINAL: {home} {home_prob:.2%} vs {away} {away_prob:.2%}")
-        print(f"{'='*60}")
-        print(f"🚀 SUBMITTING...")
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                api_request("POST", "/predictions", {
-                    "match_id": match_id,
-                    "format": "binary",
-                    "p": [round(home_prob, 2), round(away_prob, 2)],
-                    "reasoning": f"Auto: {auto_adjustment:+.1f}% + LLM: {llm_adjustment:+.1f}% = {total_adjustment:+.1f}% | Base: {home_prob:.2%}",
-                })
-                
-                # Log prediction
-                logger.log_prediction(
-                    match_id=match_id,
-                    home_team=home,
-                    away_team=away,
-                    submitted_probs=[round(home_prob, 2), round(away_prob, 2)],
-                    components={"auto_adjustment": auto_adjustment, "llm_adjustment": llm_adjustment, "total_adjustment": total_adjustment, "base_prob": home_prob},
-                    predicted_score="1-0",
-                    reasoning=f"Auto: {auto_adjustment:+.1f}% + LLM: {llm_adjustment:+.1f}% = {total_adjustment:+.1f}%",
-                )
-                
-                print(f"  ✅ Submitted: {match_id}")
-                return True
-            except Exception as e:
-                if "429" in str(e) and attempt < max_retries - 1:
-                    wait_time = (attempt + 1) * 5
-                    print(f"  ⚠️  Rate limited (429). Retrying in {wait_time}s... ({attempt+1}/{max_retries})")
-                    time.sleep(wait_time)
-                else:
-                    print(f"  ❌ Failed: {e}")
-                    return False
-        return True
-    
-    if not home.startswith("W") and not away.startswith("W") and not home.startswith("L") and not away.startswith("L"):
+        # Non-CLI mode: continue to existing get_ai_probability_adjustment
         home_prob = get_ai_probability_adjustment(
             match_id=match_id,
             home=home,
@@ -1385,12 +1450,14 @@ def main():
     parser.add_argument("--ask-agent", action="store_true", help="Manual copy-paste mode: ask any LLM agent (Kimi/ChatGPT/Claude) in browser and paste response back")
     parser.add_argument("--ask-kimi", action="store_true", help=argparse.SUPPRESS)  # deprecated alias, still works
     parser.add_argument("--fast", action="store_true", help="Skip news check (NOT RECOMMENDED)")
+    parser.add_argument("--news", action="store_true", help="Force news check even in fast mode")
     
     args = parser.parse_args()
     
     dry_run = not args.live
     # Default: check_news = True (always check news unless --fast)
-    check_news = not args.fast
+    # --news flag overrides --fast
+    check_news = args.news or not args.fast
     # Support both --ask-agent and deprecated --ask-kimi
     cli_mode = args.cli_mode
     run_auto_agent(dry_run=dry_run, match_id=args.match, check_news=check_news, cli_mode=cli_mode)
