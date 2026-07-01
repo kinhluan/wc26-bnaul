@@ -1102,16 +1102,57 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
         
         print(f"[Step 2] Building LLM prompt with news and injuries...")
         
+        # Step 1c: Auto-adjust based on news severity and injury impact
+        auto_adjustment = 0.0
+        if check_news:
+            print(f"[Step 1c] Calculating auto-adjustment from news/injuries...")
+            
+            # News severity adjustment
+            if 'news_analysis' in locals():
+                severity = news_analysis.get('severity', 'low')
+                prob_adj = news_analysis.get('probability_adjustment', 0)
+                if severity == 'high':
+                    auto_adjustment += prob_adj * 1.5  # Amplify high severity news
+                    print(f"  ⚠️ High severity news: auto-adjust {prob_adj * 1.5:+.1f}%")
+                elif severity == 'medium':
+                    auto_adjustment += prob_adj
+                    print(f"  ⚠️ Medium severity news: auto-adjust {prob_adj:+.1f}%")
+                elif severity == 'low' and prob_adj != 0:
+                    auto_adjustment += prob_adj * 0.5
+                    print(f"  ⚠️ Low severity news: auto-adjust {prob_adj * 0.5:+.1f}%")
+            
+            # Injury impact adjustment
+            if 'injury_analysis' in locals():
+                home_impact = injury_analysis.get('home_impact', 0)
+                away_impact = injury_analysis.get('away_impact', 0)
+                injury_adj = away_impact - home_impact  # Positive = away team more affected
+                if abs(injury_adj) > 0:
+                    auto_adjustment += injury_adj
+                    print(f"  🏥 Injury impact: home={home_impact}, away={away_impact}, net={injury_adj:+.1f}%")
+            
+            # Cap auto-adjustment to reasonable range
+            auto_adjustment = max(-5.0, min(5.0, auto_adjustment))
+            if auto_adjustment != 0:
+                print(f"  📊 Total auto-adjustment: {auto_adjustment:+.1f}%")
+            else:
+                print(f"  ✅ No significant auto-adjustment needed")
+        
+        # Apply auto-adjustment to base probability before LLM
+        adjusted_base = home_prob + (auto_adjustment / 100.0)
+        adjusted_base = max(0.01, min(0.99, adjusted_base))
+        
         prompt = f"""You are a Math PhD in statistical sports analysis and an expert football commentator with access to real-time web search.
 
 TASK: Analyze the following match data mathematically and intuitively to provide a PROBABILITY ADJUSTMENT for the home team's win probability.
 
 MATCH: {home} vs {away} (Match ID: {match_id})
 BASE HOME PROBABILITY: {home_prob:.1%}
+AUTO-ADJUSTED BASE (from news/injuries): {adjusted_base:.1%}
 
 --- NEWS & INJURIES SUMMARY ---
 News: {news_summary}
 Injuries: {injury_summary}
+Auto-adjustment already applied: {auto_adjustment:+.1f}%
 --- END NEWS ---
 
 --- FULL MATCH CONTEXT (JSON) ---
@@ -1119,20 +1160,13 @@ Injuries: {injury_summary}
 --- END CONTEXT ---
 
 INSTRUCTIONS:
-1. Use your web search capability to find the LATEST news about:
-   - Injuries or suspensions for either team (especially key players)
-   - Recent form changes (last 24-48 hours)
-   - Betting odds movements (significant shifts)
-   - Weather conditions at the venue
-   - Any tactical or lineup announcements
-
-2. Compare the JSON context above with real-time data. Identify any discrepancies.
-
-3. Provide a SINGLE NUMERIC ADJUSTMENT in percentage points:
+1. The system has already applied an auto-adjustment of {auto_adjustment:+.1f}% based on news severity and injury impact.
+2. Review the news and injuries summary above. If you agree with the auto-adjustment, respond with ADJUSTMENT: 0.0
+3. If you find ADDITIONAL factors not captured (e.g., weather, tactical changes, betting odds shifts), provide a FURTHER adjustment:
    - Use POSITIVE values to INCREASE home probability (e.g., +2.5, +1.0)
    - Use NEGATIVE values to DECREASE home probability (e.g., -3.0, -1.5)
-   - Use 0.0 if no adjustment is needed
-   - Range: typically -5.0 to +5.0
+   - Use 0.0 if the auto-adjustment is sufficient
+   - Range: typically -3.0 to +3.0 (smaller range since auto-adjustment already applied)
 
 4. Your response MUST contain the adjustment in this exact format:
    ADJUSTMENT: [value]
@@ -1141,14 +1175,21 @@ INSTRUCTIONS:
 
 5. Briefly explain your reasoning in 1-2 sentences after the adjustment.
 
-IMPORTANT: Be conservative. Small adjustments are better than large ones. When in doubt, use 0.0.
+IMPORTANT: Be conservative. The auto-adjustment is already applied. Only provide additional adjustment if you find strong evidence the system missed something.
 """
         
         print(f"[Step 3] Calling LLM API...")
-        adjustment = call_llm_api(prompt, dry_run=dry_run, cli_mode=cli_mode)
+        llm_adjustment = call_llm_api(prompt, dry_run=dry_run, cli_mode=cli_mode)
         
-        print(f"[Step 4] Applying adjustment...")
-        adjustment_decimal = adjustment / 100.0
+        # Combine auto-adjustment + LLM adjustment
+        total_adjustment = auto_adjustment + llm_adjustment
+        
+        print(f"[Step 4] Applying combined adjustment...")
+        print(f"  Auto-adjustment (news/injuries): {auto_adjustment:+.1f}%")
+        print(f"  LLM adjustment: {llm_adjustment:+.1f}%")
+        print(f"  Total adjustment: {total_adjustment:+.1f}%")
+        
+        adjustment_decimal = total_adjustment / 100.0
         adjusted_prob = home_prob + adjustment_decimal
         final_prob = max(0.01, min(0.99, adjusted_prob))
         
@@ -1156,7 +1197,9 @@ IMPORTANT: Be conservative. Small adjustments are better than large ones. When i
         print(f"ADJUSTMENT RESULT")
         print(f"{'='*60}")
         print(f"  Base probability:     {home_prob:.2%}")
-        print(f"  AI adjustment:        {adjustment:+.1f}%")
+        print(f"  Auto-adjustment:      {auto_adjustment:+.1f}% (news/injuries)")
+        print(f"  LLM adjustment:       {llm_adjustment:+.1f}%")
+        print(f"  Total adjustment:     {total_adjustment:+.1f}%")
         print(f"  Adjusted probability: {adjusted_prob:.2%}")
         if final_prob != adjusted_prob:
             print(f"  Clamped to:           {final_prob:.2%} (out of valid range)")
@@ -1188,7 +1231,7 @@ IMPORTANT: Be conservative. Small adjustments are better than large ones. When i
                     "match_id": match_id,
                     "format": "binary",
                     "p": [round(home_prob, 2), round(away_prob, 2)],
-                    "reasoning": f"CLI mode adjustment: {adjustment:+.1f}% | Base: {home_prob:.2%}",
+                    "reasoning": f"Auto: {auto_adjustment:+.1f}% + LLM: {llm_adjustment:+.1f}% = {total_adjustment:+.1f}% | Base: {home_prob:.2%}",
                 })
                 
                 # Log prediction
@@ -1197,9 +1240,9 @@ IMPORTANT: Be conservative. Small adjustments are better than large ones. When i
                     home_team=home,
                     away_team=away,
                     submitted_probs=[round(home_prob, 2), round(away_prob, 2)],
-                    components={"cli_adjustment": adjustment, "base_prob": home_prob},
+                    components={"auto_adjustment": auto_adjustment, "llm_adjustment": llm_adjustment, "total_adjustment": total_adjustment, "base_prob": home_prob},
                     predicted_score="1-0",
-                    reasoning=f"CLI mode adjustment: {adjustment:+.1f}%",
+                    reasoning=f"Auto: {auto_adjustment:+.1f}% + LLM: {llm_adjustment:+.1f}% = {total_adjustment:+.1f}%",
                 )
                 
                 print(f"  ✅ Submitted: {match_id}")
