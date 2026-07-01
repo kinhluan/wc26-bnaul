@@ -1,21 +1,8 @@
-# AGENT.md — wc26-bnaul
+# AGENTS.md — wc26-bnaul
 
-> **Updated:** 2026-06-30 after Issue #4 backtest analysis and competitor research.
+> **Updated:** 2026-07-01 after CLI mode refactor, advanced stats integration, and bug fixes.
 
-## 1. Project Overview
-
-**wc26-bnaul** is an autonomous prediction agent for the ClawCup tournament (FIFA World Cup 2026). The agent uses an ensemble model (xG + Elo + Form + H2H + Injury) to predict match outcomes and automatically submits via API.
-
-**Research Question:** How can an autonomous agent leverage probabilistic forecasting, external data integration, and real-time information monitoring to optimize performance in a strictly proper scoring rule prediction tournament?
-
-**Key Resources:**
-- [Issue #1](https://github.com/kinhluan/wc26-bnaul/issues/1) — Match Analysis: m074 & m075 breakdown
-- [Issue #2](https://github.com/kinhluan/wc26-bnaul/issues/2) — Ranking Improvement Plan: -16% to Top 3
-- [Issue #3](https://github.com/kinhluan/wc26-bnaul/issues/3) — Research Synthesis: 15 papers on sports prediction
-- [Issue #4](https://github.com/kinhluan/wc26-bnaul/issues/4) — Backtest Analysis: 75 matches, Skill 8.1% → 13.1%
-- [Issue #5](https://github.com/kinhluan/wc26-bnaul/issues/5) — Experiment Evaluation: Academic rigor assessment (2.9/5)
-- [Skill Memory](.agents/skills/wc26-bnaul/SKILL.md) — Compressed knowledge for future agents
-> **Updated:** 2026-06-30 after Issue #4 backtest analysis and competitor research.
+---
 
 ## 1. Project Overview
 
@@ -31,62 +18,83 @@
 - [Issue #5](https://github.com/kinhluan/wc26-bnaul/issues/5) — Experiment Evaluation: Academic rigor assessment (2.9/5)
 - [Skill Memory](.agents/skills/wc26-bnaul/SKILL.md) — Compressed knowledge for future agents
 
-## 1. Project Overview
+---
 
-**wc26-bnaul** is an autonomous prediction agent for the ClawCup tournament (FIFA World Cup 2026). The agent uses an ensemble model (xG + Elo + Form + H2H + Injury) to predict match outcomes and automatically submits via API.
+## 2. First-Time Setup for New Agents
 
-## 2. Quick Start (Play Now)
+### 2.1 Prerequisites
 
-### 2.1. Setup
+- **Python 3.12+** with `uv` package manager
+- **Git** for version control
+- **API credentials** from ClawCup (see 2.2)
+
+### 2.2 Get API Credentials
+
+1. Go to https://clawcup.io and create an account
+2. Navigate to your **Profile → API Keys**
+3. Copy:
+   - `CLAWCUP_TOKEN` (long alphanumeric string)
+   - `CLAWCUP_SIGNING_SECRET` (used for request signing)
+
+### 2.3 Create .env File
 
 ```bash
 cd wc26-bnaul
+cp .env.example .env  # If .env.example exists, or create manually:
+```
+
+Edit `.env` with your credentials:
+
+```bash
+CLAWCUP_TOKEN=your_token_here
+CLAWCUP_SIGNING_SECRET=your_secret_here
+NEWSAPI_KEY=your_newsapi_key_here          # Optional — for news monitoring
+API_FOOTBALL_KEY=your_api_football_key     # Optional — for injury data
+OPENAI_API_KEY=your_openai_key             # Optional — for auto LLM mode
+KIMI_API_KEY=your_kimi_key                  # Optional — for Kimi API mode
+```
+
+> **Security:** Never commit `.env` to git. It's already in `.gitignore`.
+
+### 2.4 Install Dependencies
+
+```bash
 uv sync
 ```
 
-### 2.2. Basic Play
+### 2.5 Verify Setup
 
 ```bash
-# View agent info
+# Check agent info
 ./wc26.sh me
 
 # List open matches
 ./wc26.sh fixtures
-
-# Predict 1 match (manual)
-./wc26.sh predict m074 --binary 0.59 0.41 --reasoning "Brazil strong" --score 2-1
-
-# Auto predict 1 match (ensemble model)
-./wc26.sh run m074
-
-# Auto predict ALL open matches
-./wc26.sh auto-agent
-
-# Auto predict + submit for real
-./wc26.sh auto-agent-live
 ```
 
-### 2.3. Interactive Menu
+If you see your agent info and a list of matches, setup is complete.
 
-```bash
-./wc26.sh
-# Select number from menu [0-23]
-```
+---
 
 ## 3. Architecture
 
 ```
-Input (Team DB) → Ensemble Model → Binary Prob → Submit → Log
+Input (JSON DB) → Ensemble Model → Binary Prob → Submit → Log
+                     ↑
+              External Agent (CLI mode)
                      ↑
               News Monitor (RSS + NewsAPI)
 ```
 
 ### Components:
-- **Ensemble Predictor** (`ensemble_predictor.py`): xG(25%) + Elo(20%) + Betting(20%) + Form(15%) + H2H(10%) + Injury(10%)
-- **News Monitor** (`news_monitor_real.py`): RSS feeds + NewsAPI + injury detection
-- **Auto Agent** (`auto_agent.py`): Fully autonomous pipeline
+- **JSON DB Layer** (`json_db.py`): `data/teams_db.json`, `data/venues_db.json`, `data/advanced_stats.csv`
+- **Ensemble Predictor** (`ensemble_predictor.py`): Elo(30%) + xG(20%) + Form(15%) + Betting(10%) + H2H(5%) + Squad Depth(5%) + Injury(15%)
+- **Auto Agent** (`auto_agent.py`): Fully autonomous pipeline with CLI mode support
 - **Prediction Logger** (`prediction_logger.py`): Log + performance tracking
-- **Batch Predict** (`batch_predict.py`): Batch predictions for all matches
+- **Advanced Stats** (`scripts/fetch_advanced_stats.py`): CSV-based xG/xGA/possession management
+- **News Monitor** (`news_monitor_real.py`): RSS feeds + NewsAPI (single query per match)
+
+---
 
 ## 4. Key Files
 
@@ -94,106 +102,198 @@ Input (Team DB) → Ensemble Model → Binary Prob → Submit → Log
 |------|---------|
 | `src/wc26_bnaul/__init__.py` | CLI commands (me, fixtures, predict, check, mine) |
 | `src/wc26_bnaul/ensemble_predictor.py` | Core prediction model |
-| `src/wc26_bnaul/auto_agent.py` | Fully autonomous agent |
-| `src/wc26_bnaul/batch_predict.py` | Batch predictions + TEAM_DB |
+| `src/wc26_bnaul/auto_agent.py` | Fully autonomous agent with CLI mode |
+| `src/wc26_bnaul/batch_predict.py` | Batch predictions + JSON DB loader |
 | `src/wc26_bnaul/prediction_logger.py` | Log predictions + performance |
-| `src/wc26_bnaul/news_monitor_real.py` | News + injury monitoring |
-| `src/wc26_bnaul/strategy.py` | Brier score optimization |
+| `src/wc26_bnaul/news_monitor_real.py` | News + injury monitoring (rate-limit safe) |
+| `src/wc26_bnaul/json_db.py` | JSON data access layer |
+| `scripts/fetch_advanced_stats.py` | CSV → JSON stats updater |
+| `data/teams_db.json` | Team data (xG, Elo, form, injuries, etc.) |
+| `data/advanced_stats.csv` | Editable CSV for xG/xGA/possession updates |
 | `wc26.sh` | All-in-one control script |
+
+---
 
 ## 5. Ensemble Model Weights
 
 ```python
 # Updated after Issue #4 backtest analysis (2026-06-30):
-# - Elo is strongest component (61.3% accuracy) → increase to 30%
-# - xG is noisy (58.7% accuracy) → decrease to 20%
-# - Form is surprisingly good (62.7% accuracy) → keep at 15%
-# - Injuries critical for knockouts → increase to 15%
-# - Betting rarely available → decrease fallback to 10%
-WEIGHT_ELO = 0.30
-WEIGHT_XG = 0.20
-WEIGHT_BETTING = 0.10
-WEIGHT_FORM = 0.15
-WEIGHT_H2H = 0.10
-WEIGHT_INJURIES = 0.15
+WEIGHT_ELO = 0.30          # Strongest component (61.3% accuracy)
+WEIGHT_FIFA = 0.10         # FIFA ranking
+WEIGHT_XG = 0.20           # Expected goals (noisy but valuable)
+WEIGHT_BETTING = 0.10      # Betting odds (when available)
+WEIGHT_FORM = 0.15         # Recent form (surprisingly good: 62.7%)
+WEIGHT_SQUAD_DEPTH = 0.05  # Market value / squad quality
+WEIGHT_H2H = 0.05          # Head-to-head history
+WEIGHT_INJURIES = 0.15     # Critical for knockouts
 ```
 
-> ⚠️ **Previous weights (before 2026-06-30):** Elo 20%, xG 25%, Betting 20%, Form 15%, H2H 10%, Injury 10%. Changed after backtest analysis showed Elo underweighted and xG overweighted.
+> ⚠️ **Weight sum must equal 1.0.** If you change weights, verify: `sum(weights) == 1.0`
 
-### Team Data (TEAM_DB)
-- FIFA rank, xG, xGA, form, injuries, H2H history
-- 32+ teams with realistic data
-- **Must be updated after every match** — form arrays, H2H records, injury counts
+---
 
-## 6. Strategy
+## 6. CLI Agent Mode (For External LLM Agents)
 
-### Brier Score is a Strictly Proper Scoring Rule
-- **Truthful submission is optimal** — always submit your true belief probability
-- Over-confidence is punished quadratically
-- Round weights: Ro32(1×) + Ro16(1.25×) = 66.7% total
+### 6.1 What is CLI Mode?
 
-### Knockout Format
-- Binary: [home_advance, away_advance] — no DRAW
-- Sum = 1.0
-- **⚠️ When model predicts a draw (1-1, 0-0), cap binary at [0.55, 0.45] max.** Penalty shootouts are ~50/50 coin flips. Overconfidence here is devastating (m075: Germany 64% → lost on penalties, Brier = 0.41).
+CLI mode allows **any external LLM agent** (kimi-cli, claude-cli, custom scripts) to:
+1. Read the full match context + prompt from stdout
+2. Analyze and provide a probability adjustment
+3. Pipe the adjustment back via stdin
+
+### 6.2 How to Use CLI Mode
+
+```bash
+# Basic: print prompt, read adjustment from stdin
+echo "ADJUSTMENT: -2.5" | ./wc26.sh auto-agent --match m080 --cli-mode --live
+
+# Or interactively:
+./wc26.sh auto-agent --match m080 --cli-mode --live
+# (Paste prompt into your LLM, paste response back, press Ctrl+D)
+```
+
+### 6.3 Pipe Workflow (For Automated Agents)
+
+```bash
+# Step 1: Run agent in CLI mode, capture prompt
+./wc26.sh auto-agent --match m080 --cli-mode --dry-run > prompt.txt
+
+# Step 2: Send prompt to your LLM
+# (Your agent reads prompt.txt, calls LLM API, gets adjustment)
+
+# Step 3: Submit with adjustment
+echo "ADJUSTMENT: -2.5" | ./wc26.sh auto-agent --match m080 --cli-mode --live
+```
+
+### 6.4 Expected Prompt Format
+
+The agent prints a JSON-structured prompt containing:
+- Match ID, teams, base probability
+- Full team data (xG, Elo, form, injuries, etc.)
+- Instructions for the LLM
+
+Expected response format:
+```
+ADJUSTMENT: -2.5
+```
+
+Range: `-5.0` to `+5.0` (percentage points). Use `0.0` if no adjustment needed.
+
+### 6.5 Alternative: Interactive Copy-Paste Mode
+
+```bash
+# For manual human-in-the-loop (any LLM: ChatGPT, Claude, Kimi)
+./wc26.sh auto-agent --match m080 --ask-agent --live
+
+# Deprecated alias (still works):
+./wc26.sh auto-agent --match m080 --ask-kimi --live
+```
+
+---
 
 ## 7. Auto-Agent Usage
 
-### Fast Mode (default)
+### 7.1 Fast Mode (Default — No LLM)
+
 ```bash
-./wc26.sh auto-agent              # Dry-run all matches
-./wc26.sh auto-agent --match m074 # Single match
+# Dry-run all open matches
+./wc26.sh auto-agent
+
+# Dry-run single match
+./wc26.sh auto-agent --match m080
+
+# Live submit (auto mode, no LLM confirmation)
+./wc26.sh auto-agent --live
 ```
 
-### With News Check
+### 7.2 With News Check
+
 ```bash
-./wc26.sh auto-agent --news       # Slower but more accurate — ALWAYS USE THIS
+./wc26.sh auto-agent --news       # Slower but more accurate
 ```
 
-> ⚠️ **Critical:** Fast mode (default) skips injury checks. For m075, Germany had 3 injuries but the model didn't adjust enough. Always run with `--news` for live data.
-> 
-> **New (2026-06-30):** Added knockout confidence cap (65%) and selectivity threshold (50/50 when no clear edge). Learned from competitor analysis (jason, wc-oracle, wc-kimi).
+> ⚠️ **Critical:** Fast mode skips injury checks. Always use `--news` for live data.
 
-### Live Submit
+### 7.3 With External LLM Agent (CLI Mode)
+
 ```bash
-./wc26.sh auto-agent-live         # Asks confirmation
-# or
-uv run wc26-bnaul auto-agent --live
+# Automated pipe workflow
+echo "ADJUSTMENT: -2.5" | ./wc26.sh auto-agent --match m080 --cli-mode --live
+
+# Interactive (manual copy-paste)
+./wc26.sh auto-agent --match m080 --ask-agent --live
 ```
 
-## 8. Monitoring & Learning
+### 7.4 Selectivity Thresholds
 
-### Performance Tracking
+| Model Confidence | Action |
+|------------------|--------|
+| < 48% or > 52% | Submit 50/50 (no clear edge) |
+| 48-52% | Submit model output |
+| > 65% in knockout | Cap at 65% (overconfidence penalty) |
+| < 35% in knockout | Floor at 35% |
+
+---
+
+## 8. Advanced Stats Management
+
+### 8.1 Update Stats from CSV
+
+```bash
+# Step 1: Export template from current teams_db.json
+python3 scripts/fetch_advanced_stats.py --export-template
+
+# Step 2: Edit data/advanced_stats.csv (Excel, Google Sheets, or VS Code)
+# Fill in: xg, xga, possession, goals_scored, shots_per_game, etc.
+
+# Step 3: Validate CSV format
+python3 scripts/fetch_advanced_stats.py --validate
+
+# Step 4: Preview changes (dry-run)
+python3 scripts/fetch_advanced_stats.py --update-json --dry-run
+
+# Step 5: Apply changes
+python3 scripts/fetch_advanced_stats.py --update-json
+```
+
+### 8.2 Display Current Stats
+
+```bash
+# All teams
+python3 scripts/fetch_advanced_stats.py --display
+
+# Specific team
+python3 scripts/fetch_advanced_stats.py --display --team England
+```
+
+---
+
+## 9. Monitoring & Learning
+
+### 9.1 Performance Tracking
+
 ```bash
 ./wc26.sh performance             # Brier score, Skill%, component accuracy
-./wc26.sh suggest-weights       # Suggest new weights (needs 10+ matches)
+./wc26.sh suggest-weights         # Suggest new weights (needs 10+ matches)
 ```
 
-> ⚠️ **Do NOT adjust weights before 10+ scored matches.** Sample size = 2 gives meaningless suggestions. Wait until Round of 16 ends.
-> 
-> **New (2026-06-30):** After Issue #4 backtest, we now use Elo 30%, xG 20%, Injury 15%. See `ensemble_predictor.py` for current weights.
+> ⚠️ **Do NOT adjust weights before 10+ scored matches.** Sample size = 2 gives meaningless suggestions.
 
-### Logs
-- `logs/predictions.jsonl` — Prediction history
+### 9.2 Logs
+
+- `logs/predictions.jsonl` — Prediction history (with timestamps)
 - `logs/results.jsonl` — Match results history (log AFTER match ends)
 - `logs/performance.json` — Performance summary
 
-### Post-Match Workflow
+### 9.3 Post-Match Workflow
+
 After every match result:
 1. Log result: `logger.log_result(match_id, home_goals, away_goals, winner)`
-2. Update TEAM_DB: shift form array, update H2H
+2. Update `data/teams_db.json`: shift form array, update H2H, injuries
 3. Re-run `performance` to track Brier score
 4. Check if weight suggestions are meaningful (n >= 10)
 
-## 9. API Credentials
-
-Required in `.env`:
-```bash
-CLAWCUP_TOKEN=your_token
-CLAWCUP_SIGNING_SECRET=your_secret
-NEWSAPI_KEY=your_key          # Optional
-API_FOOTBALL_KEY=your_key     # Optional
-```
+---
 
 ## 10. Common Commands
 
@@ -211,64 +311,91 @@ API_FOOTBALL_KEY=your_key     # Optional
 ./wc26.sh test
 
 # Full pipeline (news → model → submit)
-./wc26.sh run m074
+./wc26.sh run m080
 
-# Auto predict all
+# Auto predict all (dry-run)
 ./wc26.sh auto-agent
+
+# Auto predict with LLM agent
+./wc26.sh auto-agent --ask-agent --match m080 --live
 
 # Performance report
 ./wc26.sh performance
 
 # Suggest weight updates
 ./wc26.sh suggest-weights
+
+# Interactive menu
+./wc26.sh
 ```
 
-## 11. For New Agents
+---
 
-1. **Read `README.md`** — Overview + math formulas
-2. **Read `docs/01_STRATEGY.md`** — Optimal strategy analysis
-3. **Read `docs/02_RESEARCH_DESIGN.md`** — Experiment methodology
-4. **Run `./wc26.sh`** — Interactive menu to explore
-5. **Run `./wc26.sh auto-agent`** — See auto predictions
-6. **Check `src/wc26_bnaul/ensemble_predictor.py`** — Core model
-7. **Check `src/wc26_bnaul/batch_predict.py`** — TEAM_DB data
+## 11. For New Agents (Quick Start)
 
-## 12. Tips
+1. **Read this file** (AGENTS.md) — You are here!
+2. **Create `.env`** with your ClawCup credentials (Section 2.3)
+3. **Run `./wc26.sh me`** — Verify setup
+4. **Run `./wc26.sh fixtures`** — See open matches
+5. **Run `./wc26.sh auto-agent --match m080 --dry-run`** — See prediction without submitting
+6. **Run `./wc26.sh auto-agent --match m080 --ask-agent --live`** — Submit with LLM help
+7. **Check `src/wc26_bnaul/ensemble_predictor.py`** — Core model logic
+8. **Check `data/teams_db.json`** — Team data structure
 
-- **Truthful submission** is always optimal — no need to "game" the system
-- **Early rounds matter** — Ro32 + Ro16 = 66.7% weight
-- **Auto-agent** is the fastest way to play
-- **Performance tracking** helps improve weights over time
-- **News monitor** detects injuries via RSS + NewsAPI
+---
 
-### Hard-Won Lessons (from m074, m075, and 75-match backtest)
+## 12. Tips & Hard-Won Lessons
 
-1. **Injuries are underestimated.** Germany had 3 injuries, model gave them 64%. They lost. Always check `--news` and manually verify injury counts.
+### Core Principles
+- **Truthful submission is always optimal** — Brier score punishes overconfidence quadratically
+- **Early rounds matter** — Ro32 + Ro16 = 66.7% of total weight
+- **Static data kills accuracy** — Update `teams_db.json` after every match
 
-2. **Draw cap based on predicted score is WRONG.** Backtest shows it reduces Skill from 13% to 8%. The score prediction is unreliable (predicts 1-1 for 75% of matches). Trust binary probability directly.
-
-3. **Form can override Elo in knockouts.** Paraguay's form [1,0,1,0,1] = 60% was better than Germany's [1,0,0,1,-1] = 40%. Historical rank (#6 vs #28) didn't matter as much as recent performance.
-
-4. **Static TEAM_DB kills accuracy.** After every match, update form arrays and H2H. Stale data = stale predictions.
-
-5. **Leaderboard requires n >= 5.** We are provisional with n=2. Need 3 more scored matches just to appear. Every match counts.
-
-6. **Elo is the strongest component (61.3% accuracy).** It should have the highest weight (30%), not xG (58.7%).
-
-7. **Competitor analysis matters.** jason (Skill 55%) is selective — only predicts 12 matches with high confidence. wc-kimi (Skill 43%) caps at 65%. Learn from them.
-
-### Quick Reference: When to Adjust
-
+### Injury Rules
 | Situation | Action |
 |-----------|--------|
 | Team has 0 injuries | Trust model |
 | Team has 1 injury | Slight caution (-2%) |
 | Team has 2+ injuries | Reduce prob by 3-5% |
-| Predicted score is draw | **DO NOT cap** — score prediction is unreliable |
-| Model confidence > 65% in knockout | **Cap at 65%** (learned from wc-kimi) |
+
+### Knockout Rules
+| Situation | Action |
+|-----------|--------|
+| Model confidence > 65% | **Cap at 65%** (learned from wc-kimi) |
 | No clear edge (48-52%) | **Submit 50/50** (learned from jason) |
-| Round of 32 or 16 | Maximum focus (high weight) |
-| Weight suggestions after 2 matches | IGNORE — wait for n >= 10 |
+| Predicted score is draw | **DO NOT cap** — score prediction is unreliable |
+
+### Competitor Insights
+- **jason** (Skill 55%): Selective — only predicts 12 matches with high confidence
+- **wc-kimi** (Skill 43%): Caps at 65% confidence
+- **wc-oracle**: Uses Elo heavily
+
+### Critical Bug Fixes (2026-07-01)
+1. **NewsAPI 429**: Reduced from 5 queries/match to 1 combined OR query
+2. **Rounding bug**: Display now uses `.2%` matching `round(prob, 2)` submit
+3. **Silent failure**: Missing API key now raises `RuntimeError` instead of returning 0.0
+4. **CLI mode**: Added `--ask-agent` (generic) replacing `--ask-kimi` (Kimi-specific)
+
+---
+
+## 13. Troubleshooting
+
+### "API Error 401 Unauthorized"
+- Check `CLAWCUP_TOKEN` and `CLAWCUP_SIGNING_SECRET` in `.env`
+- Ensure `.env` is in project root (same level as `wc26.sh`)
+
+### "NewsAPI Error 429 Too Many Requests"
+- The code now uses single-query OR logic. If still hitting limits:
+  - Upgrade to NewsAPI paid tier, OR
+  - Skip news check with `--fast` flag (not recommended)
+
+### "ModuleNotFoundError: No module named 'wc26_bnaul'"
+- Run with `uv run`: `uv run python -m wc26_bnaul.auto_agent ...`
+- Or use `./wc26.sh` which handles paths correctly
+
+### "No API key found and --ask-agent not used"
+- Either: Set `OPENAI_API_KEY` or `KIMI_API_KEY` in `.env`
+- Or: Use `--ask-agent` flag for manual copy-paste mode
 
 ---
 
