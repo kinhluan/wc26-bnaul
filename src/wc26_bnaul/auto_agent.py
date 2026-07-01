@@ -1099,16 +1099,37 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
     
     # AI Probability Adjustment (LLM-powered data enrichment)
     # Only apply for real teams (not placeholders)
-    # In CLI mode, skip the reasoning loop and go straight to LLM prompt
+    # In CLI mode, still gather news but skip interactive reasoning loop
     if cli_mode and not home.startswith("W") and not away.startswith("W") and not home.startswith("L") and not away.startswith("L"):
-        # Build context directly for CLI mode (skip reasoning loop)
+        # Build context directly for CLI mode (skip reasoning loop but keep news)
         from wc26_bnaul.json_db import gather_match_context
         print(f"\n{'='*60}")
         print(f"AI PROBABILITY ADJUSTMENT: {match_id} — {home} vs {away}")
         print(f"{'='*60}")
         print(f"[Step 1] Gathering match context from JSON databases...")
         context = gather_match_context(match_id, home, away)
-        print(f"[Step 2] Building LLM prompt...")
+        
+        # Step 1b: Fetch news and injuries (if check_news enabled)
+        news_summary = "No news check performed."
+        injury_summary = "No injury check performed."
+        if check_news:
+            print(f"[Step 1b] Fetching news and injuries...")
+            try:
+                news = search_news_for_teams(home, away, hours_back=24)
+                news_analysis = analyze_news_content(news, home, away)
+                news_summary = f"Severity: {news_analysis['severity']}, Keywords: {', '.join(news_analysis['keywords_found'][:5])}"
+                print(f"  ✓ News: {news_summary}")
+            except Exception as e:
+                print(f"  ⚠ News fetch failed: {e}")
+            try:
+                injuries = fetch_injuries_for_match(home, away)
+                injury_analysis = analyze_injury_impact(injuries)
+                injury_summary = f"Severity: {injury_analysis['severity']}, Home impact: {injury_analysis['home_impact']}, Away impact: {injury_analysis['away_impact']}"
+                print(f"  ✓ Injuries: {injury_summary}")
+            except Exception as e:
+                print(f"  ⚠ Injury fetch failed: {e}")
+        
+        print(f"[Step 2] Building LLM prompt with news and injuries...")
         
         prompt = f"""You are a Math PhD in statistical sports analysis and an expert football commentator with access to real-time web search.
 
@@ -1116,6 +1137,11 @@ TASK: Analyze the following match data mathematically and intuitively to provide
 
 MATCH: {home} vs {away} (Match ID: {match_id})
 BASE HOME PROBABILITY: {home_prob:.1%}
+
+--- NEWS & INJURIES SUMMARY ---
+News: {news_summary}
+Injuries: {injury_summary}
+--- END NEWS ---
 
 --- FULL MATCH CONTEXT (JSON) ---
 {json.dumps(context, indent=2, ensure_ascii=False)}
