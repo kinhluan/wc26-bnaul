@@ -112,7 +112,10 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
                 try:
                     raw_input = sys.stdin.read()
                     # Reset stdin để có thể dùng input() ở bước sau
-                    sys.stdin = open('/dev/tty')
+                    try:
+                        sys.stdin = open('/dev/tty')
+                    except OSError:
+                        pass # Headless environment, skip TTY reset
                 except KeyboardInterrupt:
                     print("\n[ASK AGENT] Interrupted. Returning 0.0")
                     return 0.0
@@ -1339,7 +1342,7 @@ def main():
     # Default: check_news = True (always check news unless --fast)
     check_news = not args.fast
     # Support both --ask-agent and deprecated --ask-kimi
-    cli_mode = args.cli_mode or args.ask_agent or args.ask_kimi
+    cli_mode = args.cli_mode
     run_auto_agent(dry_run=dry_run, match_id=args.match, check_news=check_news, cli_mode=cli_mode)
 
 

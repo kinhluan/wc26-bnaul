@@ -106,6 +106,8 @@ show_interactive_menu() {
     echo -e "${MAGENTA}[22]${NC} ${BOLD}auto-agent${NC}            — Auto predict all open matches (dry-run, WITH NEWS CHECK)"
     echo -e "${MAGENTA}[23]${NC} ${BOLD}auto-agent-live${NC}       — Auto predict and submit (LIVE, WITH NEWS CHECK)"
     echo -e "${MAGENTA}[24]${NC} ${BOLD}auto-agent-fast${NC}       — Auto predict (FAST — skips news, NOT RECOMMENDED)"
+    echo -e "${MAGENTA}[25]${NC} ${BOLD}auto-agent-ask${NC}        — Interactive LLM mode (copy-paste to ChatGPT/Kimi/Claude)"
+    echo -e "${MAGENTA}[26]${NC} ${BOLD}auto-agent-cli${NC}        — External agent mode (pipe prompt to any LLM CLI)"
     echo ""
     
     echo -e "${CYAN}[13]${NC} ${BOLD}test${NC}                  — Run all tests"
@@ -497,6 +499,19 @@ run_interactive() {
                     print_info "Cancelled"
                 fi
                 ;;
+            25)
+                check_uv
+                print_section "Auto Agent — Interactive LLM Mode"
+                print_info "Copy-paste prompt into ChatGPT/Kimi/Claude, paste response back"
+                uv run wc26-bnaul auto-agent --ask-agent --live
+                ;;
+            26)
+                check_uv
+                print_section "Auto Agent — External CLI Mode"
+                print_info "Prints full prompt to stdout, reads ADJUSTMENT from stdin"
+                print_info "Usage: echo 'ADJUSTMENT: -2.5' | ./wc26.sh auto-agent-cli m080"
+                uv run wc26-bnaul auto-agent --cli-mode --live
+                ;;
             13)
                 check_uv
                 print_section "Running Tests"
@@ -734,6 +749,34 @@ case "${1:-}" in
             fi
         else
             print_info "Cancelled"
+        fi
+        ;;
+    
+    auto-agent-ask)
+        check_uv
+        if [ -z "$2" ]; then
+            print_section "Auto Agent ASK — All Open Matches (Interactive LLM)"
+            print_info "Copy-paste prompt into your LLM (ChatGPT/Kimi/Claude), paste response back"
+            uv run wc26-bnaul auto-agent --ask-agent --live
+        else
+            print_section "Auto Agent ASK — Match $2 (Interactive LLM)"
+            print_info "Copy-paste prompt into your LLM (ChatGPT/Kimi/Claude), paste response back"
+            uv run wc26-bnaul auto-agent --match "$2" --ask-agent --live
+        fi
+        ;;
+    
+    auto-agent-cli)
+        check_uv
+        if [ -z "$2" ]; then
+            print_section "Auto Agent CLI — All Open Matches (External Agent Mode)"
+            print_info "Prints full prompt to stdout, reads ADJUSTMENT from stdin"
+            print_info "Usage: echo 'ADJUSTMENT: -2.5' | ./wc26.sh auto-agent-cli m080"
+            uv run wc26-bnaul auto-agent --cli-mode --live
+        else
+            print_section "Auto Agent CLI — Match $2 (External Agent Mode)"
+            print_info "Prints full prompt to stdout, reads ADJUSTMENT from stdin"
+            print_info "Usage: echo 'ADJUSTMENT: -2.5' | ./wc26.sh auto-agent-cli $2"
+            uv run wc26-bnaul auto-agent --match "$2" --cli-mode --live
         fi
         ;;
     
