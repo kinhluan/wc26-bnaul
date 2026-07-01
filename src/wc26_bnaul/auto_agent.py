@@ -100,7 +100,6 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
     try:
         import os
         # Nếu có cờ --ask-agent (hoặc --ask-kimi cũ), dùng cơ chế Copy-Paste thủ công (Human-in-the-loop)
-        import sys
         if "--ask-agent" in sys.argv or "--ask-kimi" in sys.argv:
             print(f"\n{'='*60}")
             print(f"🤖 LLM PROMPT (Hãy copy nội dung dưới đây dán vào ChatGPT/Kimi/Claude):")
@@ -122,9 +121,18 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
                 
                 adjustment = _parse_adjustment_from_text(raw_input)
                 
+                # Bóc tách lời giải thích (lấy phần text sau chữ ADJUSTMENT) từ đoạn text bạn vừa Paste
+                import re
+                reasoning = "Không có lời giải thích cụ thể."
+                parts = re.split(r'ADJUSTMENT:\s*[+-]?\d+(?:\.\d+)?%?', raw_input, flags=re.IGNORECASE)
+                if len(parts) > 1 and parts[-1].strip():
+                    clean_reasoning = parts[-1].strip().replace('\n', ' ').strip()
+                    reasoning = clean_reasoning[:200] + ("..." if len(clean_reasoning) > 200 else "")
+                
                 print(f"\n{'='*60}")
-                print(f"🎯 HỆ THỐNG ĐỌC ĐƯỢC:")
-                print(f"  AI tư vấn điều chỉnh: {adjustment:+.1f}%")
+                print(f"🤖 [KIMI TƯ VẤN - QUA BẢN TEXT BẠN PASTE]")
+                print(f"💡 Nhận định: {reasoning}")
+                print(f"🎯 Chốt số: Điều chỉnh {adjustment:+.1f}%")
                 print(f"{'='*60}")
                 
                 while True:
@@ -152,11 +160,11 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
         from openai import OpenAI
         client = OpenAI(api_key=api_key, base_url="https://api.moonshot.cn/v1" if "KIMI" in os.environ else None)
         
-        print("\n⏳ Đang lấy tư vấn từ AI Agent...")
+        print("\n⏳ Đang kết nối API lấy tư vấn từ AI Agent...")
         response = client.chat.completions.create(
             model="moonshot-v1-8k" if "KIMI" in os.environ else "gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a football prediction assistant."},
+                {"role": "system", "content": "You are a Math PhD specializing in statistical sports modeling and a veteran football commentator. Your tone is highly analytical, mathematically rigorous, yet engaging like a sports pundit."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3
@@ -164,20 +172,29 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
         llm_response = response.choices[0].message.content
         adjustment = _parse_adjustment_from_text(llm_response)
         
-        # Nếu có cờ --interactive (được truyền ngầm qua sys.argv hoặc biến môi trường)
-        if "--interactive" in sys.argv:
-            print(f"\n{'='*60}")
-            print(f"🤖 AI TƯ VẤN:")
-            print(f"{'='*60}")
-            print(llm_response)
-            print(f"{'='*60}")
+        # Bóc tách lời giải thích (lấy phần text sau chữ ADJUSTMENT)
+        import re
+        reasoning = "Không có lời giải thích cụ thể."
+        parts = re.split(r'ADJUSTMENT:\s*[+-]?\d+(?:\.\d+)?%?', llm_response, flags=re.IGNORECASE)
+        if len(parts) > 1 and parts[-1].strip():
+            # Xóa bớt ký tự thừa
+            clean_reasoning = parts[-1].strip().replace('\n', ' ').strip()
+            # Giới hạn 2 câu hoặc ~150 ký tự
+            reasoning = clean_reasoning[:200] + ("..." if len(clean_reasoning) > 200 else "")
             
+        print(f"\n{'='*60}")
+        print(f"🤖 [AI TƯ VẤN TỰ ĐỘNG]")
+        print(f"💡 Nhận định: {reasoning}")
+        print(f"🎯 Chốt số: Điều chỉnh {adjustment:+.1f}%")
+        print(f"{'='*60}")
+        
+        # Nếu có cờ --interactive, cho phép can thiệp thủ công
+        if "--interactive" in sys.argv:
             while True:
                 try:
-                    val = input(f"\n👉 Bạn có đồng ý với điều chỉnh {adjustment:+.1f}% không? [Nhập số khác để Override / Nhấn Enter để Đồng ý]: ").strip()
+                    val = input(f"\n👉 Bạn có đồng ý với số {adjustment:+.1f}% không? [Nhập số khác để Override / Nhấn Enter để Đồng ý]: ").strip()
                     if not val:
                         return adjustment
-                    # Nếu user tự nhập số
                     override_adj = float(val.replace("%", ""))
                     print(f"✅ Đã ghi đè thành: {override_adj:+.1f}%")
                     return override_adj
@@ -262,9 +279,9 @@ def get_ai_probability_adjustment(
     # Step 2: Build LLM prompt with full context
     print(f"[Step 2] Building LLM prompt...")
     
-    prompt = f"""You are a football match prediction expert with access to real-time web search.
+    prompt = f"""You are a Math PhD in statistical sports analysis and an expert football commentator with access to real-time web search.
 
-TASK: Analyze the following match data and provide a PROBABILITY ADJUSTMENT for the home team's win probability.
+TASK: Analyze the following match data mathematically and intuitively to provide a PROBABILITY ADJUSTMENT for the home team's win probability.
 
 MATCH: {home} vs {away} (Match ID: {match_id})
 BASE HOME PROBABILITY: {base_prob:.1%}
@@ -1080,9 +1097,9 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
         context = gather_match_context(match_id, home, away)
         print(f"[Step 2] Building LLM prompt...")
         
-        prompt = f"""You are a football match prediction expert with access to real-time web search.
+        prompt = f"""You are a Math PhD in statistical sports analysis and an expert football commentator with access to real-time web search.
 
-TASK: Analyze the following match data and provide a PROBABILITY ADJUSTMENT for the home team's win probability.
+TASK: Analyze the following match data mathematically and intuitively to provide a PROBABILITY ADJUSTMENT for the home team's win probability.
 
 MATCH: {home} vs {away} (Match ID: {match_id})
 BASE HOME PROBABILITY: {home_prob:.1%}
