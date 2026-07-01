@@ -202,11 +202,24 @@ class PredictionLogger:
                 outcome_binary = 1
                 outcome_3way = 0
             elif winner == "draw":
-                outcome_binary = 1  # In knockout, draw = home advances (usually)
+                # In knockout, draw goes to penalties. We need to know who actually advances.
+                # If result has "advancing_team" field, use it. Otherwise skip this match.
+                advancing = result.get("advancing_team", "")
+                if advancing == result.get("home_team", ""):
+                    outcome_binary = 1
+                elif advancing == result.get("away_team", ""):
+                    outcome_binary = 0
+                else:
+                    # Cannot determine who advanced — skip Brier for this match
+                    outcome_binary = None
                 outcome_3way = 1
             else:
                 outcome_binary = 0
                 outcome_3way = 2
+            
+            # Skip if we can't determine binary outcome (draw without advancing_team info)
+            if outcome_binary is None:
+                continue
             
             # Brier score (binary)
             submitted_probs = pred["submitted_probs"]
@@ -237,6 +250,9 @@ class PredictionLogger:
             # Component analysis — which components predicted correctly?
             components = pred.get("components", {})
             for comp_name, comp_prob in components.items():
+                # Skip non-numeric component fields
+                if not isinstance(comp_prob, (int, float)):
+                    continue
                 if comp_name not in metrics["by_component"]:
                     metrics["by_component"][comp_name] = {
                         "correct": 0, "total": 0, "brier_sum": 0
@@ -369,14 +385,16 @@ class PredictionLogger:
         print(f"{'Component':<15} {'Current':<10} {'Suggested':<12} {'Change':<10}")
         print("-" * 50)
         
-        # Current weights from ensemble_predictor
+        # Current weights from ensemble_predictor (FIXED: match actual weights)
         current_weights = {
-            "xg": 0.25,
-            "betting": 0.20,
-            "elo": 0.20,
+            "elo": 0.30,
+            "fifa": 0.10,
+            "xg": 0.20,
+            "betting": 0.10,
             "form": 0.15,
-            "h2h": 0.10,
-            "injury": 0.10,
+            "squad_depth": 0.05,
+            "h2h": 0.05,
+            "injury": 0.05,
         }
         
         for comp, new_weight in sorted(suggestions.items(), key=lambda x: x[1], reverse=True):

@@ -1,0 +1,3032 @@
+{
+  "Argentina": {
+    "fifa_rank": 1,
+    "elo_rating": 2031,
+    "confederation": "CONMEBOL",
+    "host_nation": false,
+    "squad_depth_score": 9.2,
+    "xg": 2.09,
+    "xga": 0.88,
+    "form": [
+      1,
+      1,
+      1,
+      0,
+      1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Lionel Scaloni",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "possession_attacking"
+    },
+    "key_players": [
+      {
+        "name": "Messi",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Alvarez",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Enzo",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Martinez",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Brazil": {
+        "home_wins": 2,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "France": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 2
+      },
+      "England": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 58.2,
+    "goals_scored": 15.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 14.5,
+    "shots_on_target_per_game": 5.2,
+    "corners_per_game": 5.8,
+    "fouls_per_game": 9.5,
+    "yellow_cards_per_game": 1.2,
+    "red_cards_per_game": 0.0,
+    "matches_played": 7.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "France": {
+    "fifa_rank": 2,
+    "elo_rating": 2045,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 9.5,
+    "xg": 2.31,
+    "xga": 0.85,
+    "form": [
+      1,
+      0,
+      1,
+      1,
+      1
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Didier Deschamps",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "balanced_counter"
+    },
+    "key_players": [
+      {
+        "name": "Mbappe",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Griezmann",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Tchouameni",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Upamecano",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Argentina": {
+        "home_wins": 2,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "Germany": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "Belgium": {
+        "home_wins": 2,
+        "draws": 0,
+        "away_wins": 0
+      },
+      "Sweden": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 0
+      }
+    },
+    "possession": 54.8,
+    "goals_scored": 14.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 15.5,
+    "shots_on_target_per_game": 5.8,
+    "corners_per_game": 6.0,
+    "fouls_per_game": 8.5,
+    "yellow_cards_per_game": 1.0,
+    "red_cards_per_game": 0.0,
+    "matches_played": 7.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Brazil": {
+    "fifa_rank": 3,
+    "elo_rating": 2008,
+    "confederation": "CONMEBOL",
+    "host_nation": false,
+    "squad_depth_score": 9.3,
+    "xg": 2.28,
+    "xga": 1.02,
+    "form": [
+      1,
+      1,
+      1,
+      -1,
+      1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Dorival Júnior",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "attacking_flair"
+    },
+    "key_players": [
+      {
+        "name": "Vinicius Jr",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Rodrygo",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Casemiro",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Alisson",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Argentina": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 2
+      },
+      "Germany": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Croatia": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "Japan": {
+        "home_wins": 2,
+        "draws": 0,
+        "away_wins": 0
+      }
+    },
+    "possession": 58.5,
+    "goals_scored": 8.0,
+    "goals_conceded": 3.0,
+    "shots_per_game": 15.2,
+    "shots_on_target_per_game": 5.5,
+    "corners_per_game": 6.2,
+    "fouls_per_game": 9.8,
+    "yellow_cards_per_game": 1.4,
+    "red_cards_per_game": 0.0,
+    "matches_played": 5.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "England": {
+    "fifa_rank": 4,
+    "elo_rating": 2019,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 9.1,
+    "xg": 2.02,
+    "xga": 0.95,
+    "form": [
+      1,
+      1,
+      1,
+      0,
+      1
+    ],
+    "injuries": 2,
+    "coach": {
+      "name": "Thomas Tuchel",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "direct_attacking"
+    },
+    "key_players": [
+      {
+        "name": "Kane",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Bellingham",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Foden",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Rice",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "France": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "Germany": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "Spain": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 2
+      }
+    },
+    "possession": 56.2,
+    "goals_scored": 13.0,
+    "goals_conceded": 4.0,
+    "shots_per_game": 13.8,
+    "shots_on_target_per_game": 4.9,
+    "corners_per_game": 5.5,
+    "fouls_per_game": 9.2,
+    "yellow_cards_per_game": 1.1,
+    "red_cards_per_game": 0.0,
+    "matches_played": 6.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Spain": {
+    "fifa_rank": 5,
+    "elo_rating": 2038,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 9.4,
+    "xg": 2.18,
+    "xga": 0.82,
+    "form": [
+      1,
+      0,
+      1,
+      1,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Luis de la Fuente",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "possession_technical"
+    },
+    "key_players": [
+      {
+        "name": "Yamal",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Williams",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Rodri",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Morata",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Germany": {
+        "home_wins": 2,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "England": {
+        "home_wins": 2,
+        "draws": 1,
+        "away_wins": 0
+      },
+      "Italy": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 1
+      }
+    },
+    "possession": 62.8,
+    "goals_scored": 9.0,
+    "goals_conceded": 3.0,
+    "shots_per_game": 15.8,
+    "shots_on_target_per_game": 5.6,
+    "corners_per_game": 6.5,
+    "fouls_per_game": 8.2,
+    "yellow_cards_per_game": 0.8,
+    "red_cards_per_game": 0.0,
+    "matches_played": 4.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Germany": {
+    "fifa_rank": 6,
+    "elo_rating": 1975,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 8.8,
+    "xg": 1.92,
+    "xga": 1.08,
+    "form": [
+      0,
+      1,
+      0,
+      1,
+      -1
+    ],
+    "injuries": 3,
+    "coach": {
+      "name": "Julian Nagelsmann",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "high_press_attacking"
+    },
+    "key_players": [
+      {
+        "name": "Musiala",
+        "position": "MF",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Wirtz",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Kimmich",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Neuer",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "France": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "Brazil": {
+        "home_wins": 2,
+        "draws": 0,
+        "away_wins": 0
+      },
+      "Spain": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Paraguay": {
+        "home_wins": 0,
+        "draws": 2,
+        "away_wins": 0
+      }
+    },
+    "possession": 57.5,
+    "goals_scored": 6.0,
+    "goals_conceded": 5.0,
+    "shots_per_game": 14.2,
+    "shots_on_target_per_game": 5.1,
+    "corners_per_game": 5.5,
+    "fouls_per_game": 9.0,
+    "yellow_cards_per_game": 1.2,
+    "red_cards_per_game": 0.0,
+    "matches_played": 3.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Portugal": {
+    "fifa_rank": 7,
+    "elo_rating": 2011,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 8.9,
+    "xg": 2.14,
+    "xga": 0.92,
+    "form": [
+      1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Roberto Martínez",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "balanced_attacking"
+    },
+    "key_players": [
+      {
+        "name": "Ronaldo",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Felix",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Silva",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Dias",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Spain": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 2
+      },
+      "France": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Switzerland": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 0
+      }
+    },
+    "possession": 56.5,
+    "goals_scored": 12.0,
+    "goals_conceded": 6.0,
+    "shots_per_game": 14.0,
+    "shots_on_target_per_game": 5.0,
+    "corners_per_game": 5.5,
+    "fouls_per_game": 9.0,
+    "yellow_cards_per_game": 1.2,
+    "red_cards_per_game": 0.0,
+    "matches_played": 5.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Netherlands": {
+    "fifa_rank": 8,
+    "elo_rating": 1998,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 8.7,
+    "xg": 1.97,
+    "xga": 0.95,
+    "form": [
+      1,
+      0,
+      1,
+      -1,
+      -1
+    ],
+    "injuries": 2,
+    "coach": {
+      "name": "Ronald Koeman",
+      "preferred_formation": "3-4-1-2",
+      "tactical_style": "organized_attacking"
+    },
+    "key_players": [
+      {
+        "name": "Gakpo",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Depay",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "De Jong",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Van Dijk",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Argentina": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 2
+      },
+      "Spain": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "Germany": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "Morocco": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 53.8,
+    "goals_scored": 10.0,
+    "goals_conceded": 4.0,
+    "shots_per_game": 12.5,
+    "shots_on_target_per_game": 4.4,
+    "corners_per_game": 5.0,
+    "fouls_per_game": 9.8,
+    "yellow_cards_per_game": 1.3,
+    "red_cards_per_game": 0.0,
+    "matches_played": 5.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Belgium": {
+    "fifa_rank": 9,
+    "elo_rating": 1979,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 8.3,
+    "xg": 1.88,
+    "xga": 1.05,
+    "form": [
+      0,
+      1,
+      1,
+      0,
+      1
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Domenico Tedesco",
+      "preferred_formation": "3-4-2-1",
+      "tactical_style": "possession_attacking"
+    },
+    "key_players": [
+      {
+        "name": "De Bruyne",
+        "position": "MF",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Lukaku",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Tielemans",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Courtois",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "France": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "England": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "Netherlands": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 55.8,
+    "goals_scored": 9.0,
+    "goals_conceded": 6.0,
+    "shots_per_game": 13.2,
+    "shots_on_target_per_game": 4.8,
+    "corners_per_game": 5.2,
+    "fouls_per_game": 8.8,
+    "yellow_cards_per_game": 1.3,
+    "red_cards_per_game": 0.0,
+    "matches_played": 3.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Italy": {
+    "fifa_rank": 10,
+    "elo_rating": 1962,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 8.2,
+    "xg": 1.75,
+    "xga": 0.92,
+    "form": [
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    "injuries": 2,
+    "coach": {
+      "name": "Luciano Spalletti",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "organized_defensive"
+    },
+    "key_players": [
+      {
+        "name": "Barella",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Chiesa",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Immobile",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Donnarumma",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Spain": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "Germany": {
+        "home_wins": 1,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "England": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 54.5,
+    "goals_scored": 11.0,
+    "goals_conceded": 6.0,
+    "shots_per_game": 12.8,
+    "shots_on_target_per_game": 4.5,
+    "corners_per_game": 5.0,
+    "fouls_per_game": 9.5,
+    "yellow_cards_per_game": 1.3,
+    "red_cards_per_game": 0.0,
+    "matches_played": 6.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "USA": {
+    "fifa_rank": 11,
+    "elo_rating": 1928,
+    "confederation": "CONCACAF",
+    "host_nation": true,
+    "squad_depth_score": 7.5,
+    "xg": 1.62,
+    "xga": 1.22,
+    "form": [
+      1,
+      0,
+      1,
+      1,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Gregg Berhalter",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "high_energy_press"
+    },
+    "key_players": [
+      {
+        "name": "Pulisic",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Reyna",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Adams",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Turner",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Mexico": {
+        "home_wins": 2,
+        "draws": 1,
+        "away_wins": 0
+      },
+      "Canada": {
+        "home_wins": 2,
+        "draws": 0,
+        "away_wins": 0
+      }
+    },
+    "possession": 48.5,
+    "goals_scored": 3.0,
+    "goals_conceded": 5.0,
+    "shots_per_game": 10.5,
+    "shots_on_target_per_game": 3.6,
+    "corners_per_game": 4.2,
+    "fouls_per_game": 11.0,
+    "yellow_cards_per_game": 1.5,
+    "red_cards_per_game": 0.0,
+    "matches_played": 4.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Mexico": {
+    "fifa_rank": 12,
+    "elo_rating": 1932,
+    "confederation": "CONCACAF",
+    "host_nation": true,
+    "squad_depth_score": 7.6,
+    "xg": 1.59,
+    "xga": 1.18,
+    "form": [
+      1,
+      1,
+      1,
+      0,
+      0
+    ],
+    "injuries": 2,
+    "coach": {
+      "name": "Jaime Lozano",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "organized_defensive"
+    },
+    "key_players": [
+      {
+        "name": "Alvarez",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Antuna",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Herrera",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Ochoa",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "USA": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 2
+      },
+      "Ecuador": {
+        "home_wins": 2,
+        "draws": 1,
+        "away_wins": 0
+      }
+    },
+    "possession": 48.5,
+    "goals_scored": 2.0,
+    "goals_conceded": 3.0,
+    "shots_per_game": 10.8,
+    "shots_on_target_per_game": 3.8,
+    "corners_per_game": 4.5,
+    "fouls_per_game": 11.5,
+    "yellow_cards_per_game": 1.7,
+    "red_cards_per_game": 0.0,
+    "matches_played": 3.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Morocco": {
+    "fifa_rank": 13,
+    "elo_rating": 1985,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 8.5,
+    "xg": 1.62,
+    "xga": 0.88,
+    "form": [
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Walid Regragui",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "low_block_counter"
+    },
+    "key_players": [
+      {
+        "name": "Hakimi",
+        "position": "DF",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "En-Nesyri",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Ounahi",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Bounou",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Spain": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "Portugal": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Netherlands": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 0
+      }
+    },
+    "possession": 38.5,
+    "goals_scored": 6.0,
+    "goals_conceded": 5.0,
+    "shots_per_game": 9.5,
+    "shots_on_target_per_game": 3.3,
+    "corners_per_game": 3.8,
+    "fouls_per_game": 12.0,
+    "yellow_cards_per_game": 1.8,
+    "red_cards_per_game": 0.1,
+    "matches_played": 7.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Switzerland": {
+    "fifa_rank": 14,
+    "elo_rating": 1910,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 7.3,
+    "xg": 1.58,
+    "xga": 1.08,
+    "form": [
+      0,
+      1,
+      1,
+      0,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Murat Yakin",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "organized_balanced"
+    },
+    "key_players": [
+      {
+        "name": "Xhaka",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Embolo",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Sommer",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Freuler",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "France": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 2
+      },
+      "Portugal": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 1
+      }
+    },
+    "possession": 49.2,
+    "goals_scored": 7.0,
+    "goals_conceded": 9.0,
+    "shots_per_game": 11.5,
+    "shots_on_target_per_game": 4.0,
+    "corners_per_game": 4.5,
+    "fouls_per_game": 10.8,
+    "yellow_cards_per_game": 1.6,
+    "red_cards_per_game": 0.0,
+    "matches_played": 4.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Croatia": {
+    "fifa_rank": 15,
+    "elo_rating": 1895,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 7.1,
+    "xg": 1.45,
+    "xga": 1.12,
+    "form": [
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "injuries": 3,
+    "coach": {
+      "name": "Zlatko Dalic",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "possession_technical"
+    },
+    "key_players": [
+      {
+        "name": "Modric",
+        "position": "MF",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Kovacic",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Perisic",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Livakovic",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Brazil": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "Argentina": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 2
+      }
+    },
+    "possession": 48.5,
+    "goals_scored": 8.0,
+    "goals_conceded": 7.0,
+    "shots_per_game": 11.2,
+    "shots_on_target_per_game": 3.9,
+    "corners_per_game": 4.5,
+    "fouls_per_game": 10.8,
+    "yellow_cards_per_game": 1.7,
+    "red_cards_per_game": 0.1,
+    "matches_played": 7.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Japan": {
+    "fifa_rank": 16,
+    "elo_rating": 1885,
+    "confederation": "AFC",
+    "host_nation": false,
+    "squad_depth_score": 7.0,
+    "xg": 1.42,
+    "xga": 1.15,
+    "form": [
+      0,
+      0,
+      1,
+      1,
+      -1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Hajime Moriyasu",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "organized_counter"
+    },
+    "key_players": [
+      {
+        "name": "Kubo",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Mitoma",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Endo",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Gonda",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Germany": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "Spain": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Brazil": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 44.2,
+    "goals_scored": 5.0,
+    "goals_conceded": 4.0,
+    "shots_per_game": 10.2,
+    "shots_on_target_per_game": 3.5,
+    "corners_per_game": 4.2,
+    "fouls_per_game": 11.0,
+    "yellow_cards_per_game": 1.6,
+    "red_cards_per_game": 0.0,
+    "matches_played": 4.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Colombia": {
+    "fifa_rank": 17,
+    "elo_rating": 1872,
+    "confederation": "CONMEBOL",
+    "host_nation": false,
+    "squad_depth_score": 6.8,
+    "xg": 1.55,
+    "xga": 1.15,
+    "form": [
+      1,
+      0,
+      1,
+      1,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Néstor Lorenzo",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "attacking_flair"
+    },
+    "key_players": [
+      {
+        "name": "Diaz",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Rodriguez",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Cuadrado",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Ospina",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Brazil": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 2
+      },
+      "Argentina": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      }
+    },
+    "possession": 51.8,
+    "goals_scored": 12.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 11.8,
+    "shots_on_target_per_game": 4.2,
+    "corners_per_game": 4.5,
+    "fouls_per_game": 10.5,
+    "yellow_cards_per_game": 1.6,
+    "red_cards_per_game": 0.0,
+    "matches_played": 8.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Senegal": {
+    "fifa_rank": 18,
+    "elo_rating": 1862,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 6.7,
+    "xg": 1.38,
+    "xga": 1.22,
+    "form": [
+      1,
+      1,
+      0,
+      0,
+      1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Aliou Cissé",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "fast_athletic"
+    },
+    "key_players": [
+      {
+        "name": "Mane",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Sarr",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Koulibaly",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Mendy",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Netherlands": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "England": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 46.5,
+    "goals_scored": 5.0,
+    "goals_conceded": 7.0,
+    "shots_per_game": 10.0,
+    "shots_on_target_per_game": 3.4,
+    "corners_per_game": 4.0,
+    "fouls_per_game": 11.5,
+    "yellow_cards_per_game": 1.8,
+    "red_cards_per_game": 0.1,
+    "matches_played": 4.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Sweden": {
+    "fifa_rank": 19,
+    "elo_rating": 1845,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 6.5,
+    "xg": 1.35,
+    "xga": 1.25,
+    "form": [
+      0,
+      0,
+      1,
+      1,
+      -1
+    ],
+    "injuries": 2,
+    "coach": {
+      "name": "Janne Andersson",
+      "preferred_formation": "4-4-2",
+      "tactical_style": "organized_counter"
+    },
+    "key_players": [
+      {
+        "name": "Isak",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Kulusevski",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Lindlov",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Olsen",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Germany": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "England": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "France": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 49.5,
+    "goals_scored": 7.0,
+    "goals_conceded": 7.0,
+    "shots_per_game": 10.2,
+    "shots_on_target_per_game": 3.5,
+    "corners_per_game": 4.0,
+    "fouls_per_game": 10.5,
+    "yellow_cards_per_game": 1.5,
+    "red_cards_per_game": 0.0,
+    "matches_played": 6.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Uruguay": {
+    "fifa_rank": 20,
+    "elo_rating": 1855,
+    "confederation": "CONMEBOL",
+    "host_nation": false,
+    "squad_depth_score": 6.6,
+    "xg": 1.42,
+    "xga": 1.18,
+    "form": [
+      1,
+      0,
+      1,
+      0,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Marcelo Bielsa",
+      "preferred_formation": "4-4-2",
+      "tactical_style": "direct_physical"
+    },
+    "key_players": [
+      {
+        "name": "Nunez",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Valverde",
+        "position": "MF",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Araujo",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Rochet",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Argentina": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Brazil": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 2
+      }
+    },
+    "possession": 48.8,
+    "goals_scored": 5.0,
+    "goals_conceded": 6.0,
+    "shots_per_game": 10.8,
+    "shots_on_target_per_game": 3.7,
+    "corners_per_game": 4.1,
+    "fouls_per_game": 10.5,
+    "yellow_cards_per_game": 1.4,
+    "red_cards_per_game": 0.0,
+    "matches_played": 3.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Ecuador": {
+    "fifa_rank": 21,
+    "elo_rating": 1832,
+    "confederation": "CONMEBOL",
+    "host_nation": false,
+    "squad_depth_score": 6.4,
+    "xg": 1.38,
+    "xga": 1.28,
+    "form": [
+      -1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Félix Sánchez",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "fast_athletic"
+    },
+    "key_players": [
+      {
+        "name": "Caicedo",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Valencia",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Estupinan",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Dominguez",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Mexico": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "Argentina": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      }
+    },
+    "possession": 46.5,
+    "goals_scored": 4.0,
+    "goals_conceded": 3.0,
+    "shots_per_game": 9.8,
+    "shots_on_target_per_game": 3.4,
+    "corners_per_game": 4.0,
+    "fouls_per_game": 11.5,
+    "yellow_cards_per_game": 1.9,
+    "red_cards_per_game": 0.1,
+    "matches_played": 3.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Australia": {
+    "fifa_rank": 22,
+    "elo_rating": 1865,
+    "confederation": "AFC",
+    "host_nation": false,
+    "squad_depth_score": 6.6,
+    "xg": 1.29,
+    "xga": 1.21,
+    "form": [
+      1,
+      0,
+      1,
+      0,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Graham Arnold",
+      "preferred_formation": "4-4-2",
+      "tactical_style": "organized_pragmatic"
+    },
+    "key_players": [
+      {
+        "name": "Leckie",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Irvine",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Redmayne",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "McGree",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Japan": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 1
+      },
+      "England": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 38.5,
+    "goals_scored": 4.0,
+    "goals_conceded": 6.0,
+    "shots_per_game": 8.2,
+    "shots_on_target_per_game": 2.8,
+    "corners_per_game": 3.5,
+    "fouls_per_game": 12.5,
+    "yellow_cards_per_game": 2.1,
+    "red_cards_per_game": 0.1,
+    "matches_played": 4.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Austria": {
+    "fifa_rank": 23,
+    "elo_rating": 1828,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 6.2,
+    "xg": 1.45,
+    "xga": 1.18,
+    "form": [
+      1,
+      0,
+      0,
+      1,
+      1
+    ],
+    "injuries": 2,
+    "coach": {
+      "name": "Ralf Rangnick",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "organized_counter"
+    },
+    "key_players": [
+      {
+        "name": "Arnautovic",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Sabitzer",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Alaba",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Lindner",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Germany": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Spain": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      }
+    },
+    "possession": 52.3,
+    "goals_scored": 8.0,
+    "goals_conceded": 7.0,
+    "shots_per_game": 11.5,
+    "shots_on_target_per_game": 4.1,
+    "corners_per_game": 4.8,
+    "fouls_per_game": 10.2,
+    "yellow_cards_per_game": 1.5,
+    "red_cards_per_game": 0.0,
+    "matches_played": 6.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Canada": {
+    "fifa_rank": 24,
+    "elo_rating": 1851,
+    "confederation": "CONCACAF",
+    "host_nation": true,
+    "squad_depth_score": 7.2,
+    "xg": 1.45,
+    "xga": 1.28,
+    "form": [
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Jesse Marsch",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "direct_attacking"
+    },
+    "key_players": [
+      {
+        "name": "Davies",
+        "position": "DF",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "David",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Buchanan",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Borjan",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "USA": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Mexico": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      }
+    },
+    "possession": 42.1,
+    "goals_scored": 2.0,
+    "goals_conceded": 7.0,
+    "shots_per_game": 9.5,
+    "shots_on_target_per_game": 3.2,
+    "corners_per_game": 4.1,
+    "fouls_per_game": 11.2,
+    "yellow_cards_per_game": 1.8,
+    "red_cards_per_game": 0.1,
+    "matches_played": 3.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Algeria": {
+    "fifa_rank": 25,
+    "elo_rating": 1798,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 5.9,
+    "xg": 1.22,
+    "xga": 1.35,
+    "form": [
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Djamel Belmadi",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "fast_athletic"
+    },
+    "key_players": [
+      {
+        "name": "Mahrez",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Bennacer",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Slimani",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Mbolhi",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "France": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Germany": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 48.5,
+    "goals_scored": 12.0,
+    "goals_conceded": 15.0,
+    "shots_per_game": 10.2,
+    "shots_on_target_per_game": 3.5,
+    "corners_per_game": 4.2,
+    "fouls_per_game": 11.8,
+    "yellow_cards_per_game": 1.8,
+    "red_cards_per_game": 0.1,
+    "matches_played": 10.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Egypt": {
+    "fifa_rank": 26,
+    "elo_rating": 1805,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 6.0,
+    "xg": 1.25,
+    "xga": 1.32,
+    "form": [
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Hossam Hassan",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "organized_counter"
+    },
+    "key_players": [
+      {
+        "name": "Salah",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Elneny",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Trezequet",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "El Shenawy",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Spain": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "Portugal": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 47.5,
+    "goals_scored": 8.0,
+    "goals_conceded": 9.0,
+    "shots_per_game": 9.5,
+    "shots_on_target_per_game": 3.2,
+    "corners_per_game": 3.8,
+    "fouls_per_game": 11.8,
+    "yellow_cards_per_game": 1.9,
+    "red_cards_per_game": 0.1,
+    "matches_played": 8.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Norway": {
+    "fifa_rank": 27,
+    "elo_rating": 1815,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 6.1,
+    "xg": 1.38,
+    "xga": 1.28,
+    "form": [
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    "injuries": 2,
+    "coach": {
+      "name": "Ståle Solbakken",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "direct_attacking"
+    },
+    "key_players": [
+      {
+        "name": "Haaland",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Odegaard",
+        "position": "MF",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Hauge",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Nyland",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Sweden": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "England": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Ivory Coast": {
+        "home_wins": 1,
+        "draws": 0,
+        "away_wins": 0
+      }
+    },
+    "possession": 50.5,
+    "goals_scored": 8.0,
+    "goals_conceded": 7.0,
+    "shots_per_game": 10.5,
+    "shots_on_target_per_game": 3.6,
+    "corners_per_game": 4.0,
+    "fouls_per_game": 10.8,
+    "yellow_cards_per_game": 1.5,
+    "red_cards_per_game": 0.0,
+    "matches_played": 6.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Paraguay": {
+    "fifa_rank": 28,
+    "elo_rating": 1815,
+    "confederation": "CONMEBOL",
+    "host_nation": false,
+    "squad_depth_score": 6.1,
+    "xg": 1.22,
+    "xga": 1.21,
+    "form": [
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Daniel Garnero",
+      "preferred_formation": "4-4-2",
+      "tactical_style": "defensive_organized"
+    },
+    "key_players": [
+      {
+        "name": "Almiron",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Sanabria",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Gomez",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Silva",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Brazil": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Argentina": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 2
+      },
+      "Germany": {
+        "home_wins": 0,
+        "draws": 1,
+        "away_wins": 0
+      }
+    },
+    "possession": 47.5,
+    "goals_scored": 7.0,
+    "goals_conceded": 7.0,
+    "shots_per_game": 9.5,
+    "shots_on_target_per_game": 3.2,
+    "corners_per_game": 3.8,
+    "fouls_per_game": 11.2,
+    "yellow_cards_per_game": 1.7,
+    "red_cards_per_game": 0.1,
+    "matches_played": 8.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Ivory Coast": {
+    "fifa_rank": 29,
+    "elo_rating": 1788,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 5.8,
+    "xg": 1.18,
+    "xga": 1.38,
+    "form": [
+      0,
+      1,
+      0,
+      1,
+      -1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Emerse Faé",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "fast_athletic"
+    },
+    "key_players": [
+      {
+        "name": "Zaha",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Haller",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Kessie",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Sangare",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "France": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "England": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "Norway": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 46.8,
+    "goals_scored": 7.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 9.2,
+    "shots_on_target_per_game": 3.1,
+    "corners_per_game": 3.8,
+    "fouls_per_game": 11.5,
+    "yellow_cards_per_game": 1.8,
+    "red_cards_per_game": 0.1,
+    "matches_played": 8.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Bosnia & Herzegovina": {
+    "fifa_rank": 30,
+    "elo_rating": 1782,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 5.8,
+    "xg": 1.15,
+    "xga": 1.42,
+    "form": [
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "injuries": 2,
+    "coach": {
+      "name": "Sergej Barbarez",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "direct_physical"
+    },
+    "key_players": [
+      {
+        "name": "Dzeko",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Pjanic",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Tatar",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Sehic",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Germany": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Spain": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      }
+    },
+    "possession": 45.2,
+    "goals_scored": 6.0,
+    "goals_conceded": 9.0,
+    "shots_per_game": 9.1,
+    "shots_on_target_per_game": 3.0,
+    "corners_per_game": 3.8,
+    "fouls_per_game": 11.5,
+    "yellow_cards_per_game": 1.9,
+    "red_cards_per_game": 0.1,
+    "matches_played": 8.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Ghana": {
+    "fifa_rank": 45,
+    "elo_rating": 1762,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 5.5,
+    "xg": 1.05,
+    "xga": 1.45,
+    "form": [
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "injuries": 1,
+    "coach": {
+      "name": "Chris Hughton",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "fast_athletic"
+    },
+    "key_players": [
+      {
+        "name": "Kudus",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Partey",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Williams",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Ati-Zigi",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Portugal": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Spain": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 43.2,
+    "goals_scored": 5.0,
+    "goals_conceded": 7.0,
+    "shots_per_game": 8.5,
+    "shots_on_target_per_game": 2.9,
+    "corners_per_game": 3.5,
+    "fouls_per_game": 12.2,
+    "yellow_cards_per_game": 2.1,
+    "red_cards_per_game": 0.1,
+    "matches_played": 3.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "DR Congo": {
+    "fifa_rank": 55,
+    "elo_rating": 1728,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 5.1,
+    "xg": 0.95,
+    "xga": 1.52,
+    "form": [
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Sébastien Desabre",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "organized_counter"
+    },
+    "key_players": [
+      {
+        "name": "Bakambu",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Meschak",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Muke",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Mandanda",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "France": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      },
+      "England": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 1
+      }
+    },
+    "possession": 42.8,
+    "goals_scored": 5.0,
+    "goals_conceded": 9.0,
+    "shots_per_game": 8.2,
+    "shots_on_target_per_game": 2.8,
+    "corners_per_game": 3.5,
+    "fouls_per_game": 12.5,
+    "yellow_cards_per_game": 2.0,
+    "red_cards_per_game": 0.1,
+    "matches_played": 8.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Cape Verde": {
+    "fifa_rank": 65,
+    "elo_rating": 1731,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 5.0,
+    "xg": 0.92,
+    "xga": 1.55,
+    "form": [
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Bubista",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "compact_organized"
+    },
+    "key_players": [
+      {
+        "name": "Andrade",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Fortes",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Soares",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Vozinha",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {
+      "Portugal": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      },
+      "Spain": {
+        "home_wins": 0,
+        "draws": 0,
+        "away_wins": 2
+      }
+    },
+    "possession": 40.5,
+    "goals_scored": 4.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 7.8,
+    "shots_on_target_per_game": 2.5,
+    "corners_per_game": 3.2,
+    "fouls_per_game": 12.8,
+    "yellow_cards_per_game": 2.2,
+    "red_cards_per_game": 0.1,
+    "matches_played": 6.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Turkey": {
+    "fifa_rank": 34,
+    "elo_rating": 1828,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 6.2,
+    "xg": 1.45,
+    "xga": 1.32,
+    "form": [
+      1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Vincenzo Montella",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "attacking_balanced"
+    },
+    "key_players": [
+      {
+        "name": "Calhanoglu",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Yildiz",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Guler",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Gunok",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {},
+    "possession": 50.8,
+    "goals_scored": 9.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 10.8,
+    "shots_on_target_per_game": 3.7,
+    "corners_per_game": 4.2,
+    "fouls_per_game": 10.5,
+    "yellow_cards_per_game": 1.5,
+    "red_cards_per_game": 0.1,
+    "matches_played": 8.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Czech Republic": {
+    "fifa_rank": 39,
+    "elo_rating": 1812,
+    "confederation": "UEFA",
+    "host_nation": false,
+    "squad_depth_score": 6.2,
+    "xg": 1.35,
+    "xga": 1.28,
+    "form": [
+      1,
+      0,
+      1,
+      0,
+      0
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Ivan Hasek",
+      "preferred_formation": "4-2-3-1",
+      "tactical_style": "organized_counter"
+    },
+    "key_players": [
+      {
+        "name": "Schick",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Soucek",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Kuchta",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Vaclik",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {},
+    "possession": 49.2,
+    "goals_scored": 7.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 10.5,
+    "shots_on_target_per_game": 3.6,
+    "corners_per_game": 4.2,
+    "fouls_per_game": 11.0,
+    "yellow_cards_per_game": 1.8,
+    "red_cards_per_game": 0.1,
+    "matches_played": 6.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "South Korea": {
+    "fifa_rank": 25,
+    "elo_rating": 1878,
+    "confederation": "AFC",
+    "host_nation": false,
+    "squad_depth_score": 6.8,
+    "xg": 1.38,
+    "xga": 1.19,
+    "form": [
+      1,
+      0,
+      1,
+      0,
+      0
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Jürgen Klinsmann",
+      "preferred_formation": "4-4-2",
+      "tactical_style": "high_work_rate"
+    },
+    "key_players": [
+      {
+        "name": "Son",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Hwang",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Kim Min-jae",
+        "position": "DF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Lee Jae-sung",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {},
+    "possession": 44.5,
+    "goals_scored": 5.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 10.2,
+    "shots_on_target_per_game": 3.5,
+    "corners_per_game": 4.0,
+    "fouls_per_game": 11.2,
+    "yellow_cards_per_game": 1.6,
+    "red_cards_per_game": 0.0,
+    "matches_played": 4.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Nigeria": {
+    "fifa_rank": 35,
+    "elo_rating": 1822,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 6.3,
+    "xg": 1.41,
+    "xga": 1.28,
+    "form": [
+      0,
+      1,
+      1,
+      0,
+      1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Finidi George",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "fast_athletic"
+    },
+    "key_players": [
+      {
+        "name": "Osimhen",
+        "position": "FW",
+        "season_rating": 8.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Lookman",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Iwobi",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Nwabali",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {},
+    "possession": 48.2,
+    "goals_scored": 9.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 10.8,
+    "shots_on_target_per_game": 3.7,
+    "corners_per_game": 4.2,
+    "fouls_per_game": 11.2,
+    "yellow_cards_per_game": 1.7,
+    "red_cards_per_game": 0.1,
+    "matches_played": 8.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "Qatar": {
+    "fifa_rank": 53,
+    "elo_rating": 1772,
+    "confederation": "AFC",
+    "host_nation": false,
+    "squad_depth_score": 5.6,
+    "xg": 1.09,
+    "xga": 1.38,
+    "form": [
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Tintin Marquez",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "possession_technical"
+    },
+    "key_players": [
+      {
+        "name": "Afif",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Ali",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Al-Haydos",
+        "position": "MF",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Barsham",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {},
+    "possession": 44.2,
+    "goals_scored": 1.0,
+    "goals_conceded": 7.0,
+    "shots_per_game": 8.5,
+    "shots_on_target_per_game": 2.9,
+    "corners_per_game": 3.5,
+    "fouls_per_game": 11.8,
+    "yellow_cards_per_game": 2.0,
+    "red_cards_per_game": 0.1,
+    "matches_played": 3.0,
+    "data_source": "fbref_wc_2022",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  },
+  "South Africa": {
+    "fifa_rank": 43,
+    "elo_rating": 1789,
+    "confederation": "CAF",
+    "host_nation": false,
+    "squad_depth_score": 5.8,
+    "xg": 1.21,
+    "xga": 1.42,
+    "form": [
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "injuries": 0,
+    "coach": {
+      "name": "Hugo Broos",
+      "preferred_formation": "4-3-3",
+      "tactical_style": "organized_defensive"
+    },
+    "key_players": [
+      {
+        "name": "Percy Tau",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Dolly",
+        "position": "FW",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      },
+      {
+        "name": "Ronwen Williams",
+        "position": "GK",
+        "season_rating": 7.5,
+        "is_injured": false,
+        "is_suspended": false
+      }
+    ],
+    "h2h": {},
+    "possession": 45.8,
+    "goals_scored": 6.0,
+    "goals_conceded": 8.0,
+    "shots_per_game": 9.2,
+    "shots_on_target_per_game": 3.1,
+    "corners_per_game": 3.6,
+    "fouls_per_game": 11.8,
+    "yellow_cards_per_game": 1.9,
+    "red_cards_per_game": 0.1,
+    "matches_played": 8.0,
+    "data_source": "friendlies_2024",
+    "data_source_csv": true,
+    "last_updated": "2026-07-01T09:04:36Z"
+  }
+}

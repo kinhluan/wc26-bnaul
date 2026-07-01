@@ -381,30 +381,24 @@ def fetch_rss_feed(feed_url: str) -> List[Dict]:
 
 def search_news_for_teams(home: str, away: str, hours_back: int = 24) -> List[Dict]:
     """
-    Search news for a specific match.
+    Search news for a specific match using a SINGLE optimized NewsAPI query.
     
-    Queries multiple sources and returns aggregated results.
+    Reduces from 5 separate API calls to 1 combined query using OR logic,
+    preventing rate limiting (429 errors) on the free tier.
     """
     all_news = []
     
     # Calculate from_date
     from_date = (datetime.now(timezone.utc) - timedelta(hours=hours_back)).strftime("%Y-%m-%d")
     
-    # 1. NewsAPI queries
-    queries = [
-        f'"{home}" football',
-        f'"{away}" football',
-        f'"{home}" "{away}"',
-        f'"{home}" injury OR suspended',
-        f'"{away}" injury OR suspended',
-    ]
+    # SINGLE NewsAPI query combining all search terms with OR
+    # Format: ("home" OR "away") AND (football OR injury OR suspended OR world cup)
+    combined_query = f'("{home}" OR "{away}") AND (football OR injury OR suspended OR "world cup")'
     
-    for query in queries:
-        news = fetch_newsapi(query, from_date=from_date, page_size=5)
-        all_news.extend(news)
-        time.sleep(1)  # Rate limit: be nice to NewsAPI
+    news = fetch_newsapi(combined_query, from_date=from_date, page_size=20)
+    all_news.extend(news)
     
-    # 2. RSS feeds
+    # 2. RSS feeds (no rate limits)
     for name, url in RSS_FEEDS.items():
         items = fetch_rss_feed(url)
         # Filter for relevant teams

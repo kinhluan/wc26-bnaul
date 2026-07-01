@@ -502,7 +502,7 @@ def cmd_suggest_weights():
 def cmd_auto_agent(args):
     """Run fully autonomous prediction agent."""
     from .auto_agent import run_auto_agent
-    run_auto_agent(dry_run=not args.live, match_id=args.match)
+    run_auto_agent(dry_run=not args.live, match_id=args.match, cli_mode=args.ask_kimi)
 
 
 def main():
@@ -587,6 +587,7 @@ def main():
     p_auto.add_argument("--dry-run", action="store_true", help="Preview without submitting")
     p_auto.add_argument("--live", action="store_true", help="Actually submit")
     p_auto.add_argument("--match", help="Specific match ID (default: all open)")
+    p_auto.add_argument("--ask-kimi", action="store_true", help="Interactively ask user for Kimi's adjustment")
 
     # performance
     sub.add_parser("performance", help="Show prediction performance & logs")

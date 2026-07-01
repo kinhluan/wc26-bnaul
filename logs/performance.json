@@ -1,61 +1,133 @@
 {
-  "total_predictions": 62,
-  "total_results": 2,
-  "matches_with_results": 4,
+  "total_predictions": 168,
+  "total_results": 6,
+  "matches_with_results": 20,
   "brier_scores": [
     0.16810000000000003,
     0.34809999999999997,
+    0.31360000000000005,
+    0.30250000000000005,
+    0.16000000000000003,
+    0.19359999999999997,
     0.16810000000000003,
-    0.34809999999999997
+    0.34809999999999997,
+    0.31360000000000005,
+    0.30250000000000005,
+    0.16000000000000003,
+    0.19359999999999997,
+    0.31360000000000005,
+    0.30250000000000005,
+    0.16000000000000003,
+    0.19359999999999997,
+    0.2916,
+    0.16810000000000003,
+    0.18490000000000004,
+    0.25
   ],
   "rps_scores": [],
   "weighted_rps": [],
   "by_round": {
     "": {
-      "count": 4,
-      "brier_sum": 1.0324,
+      "count": 20,
+      "brier_sum": 4.836100000000001,
       "rps_sum": 0,
-      "mean_brier": 0.2581,
+      "mean_brier": 0.24180500000000005,
       "mean_rps": 0
     }
   },
   "by_component": {
     "elo": {
-      "correct": 2,
-      "total": 4,
-      "brier_sum": 1.1048000000000002,
-      "accuracy": 0.5,
-      "mean_brier": 0.27620000000000006
+      "correct": 15,
+      "total": 20,
+      "brier_sum": 4.0522,
+      "accuracy": 0.75,
+      "mean_brier": 0.20261
     },
     "xg": {
-      "correct": 2,
-      "total": 4,
-      "brier_sum": 1.0888,
-      "accuracy": 0.5,
-      "mean_brier": 0.2722
+      "correct": 15,
+      "total": 20,
+      "brier_sum": 4.558400000000001,
+      "accuracy": 0.75,
+      "mean_brier": 0.22792000000000004
     },
     "form": {
-      "correct": 2,
-      "total": 4,
-      "brier_sum": 1.0282,
-      "accuracy": 0.5,
-      "mean_brier": 0.25705
+      "correct": 11,
+      "total": 20,
+      "brier_sum": 4.7934,
+      "accuracy": 0.55,
+      "mean_brier": 0.23967
     },
     "h2h": {
       "correct": 0,
-      "total": 4,
-      "brier_sum": 1.0,
+      "total": 20,
+      "brier_sum": 5.0,
       "accuracy": 0.0,
       "mean_brier": 0.25
     },
     "injury": {
       "correct": 0,
-      "total": 4,
-      "brier_sum": 1.0,
+      "total": 20,
+      "brier_sum": 5.0,
       "accuracy": 0.0,
       "mean_brier": 0.25
+    },
+    "fifa": {
+      "correct": 4,
+      "total": 4,
+      "brier_sum": 0.6675000000000001,
+      "accuracy": 1.0,
+      "mean_brier": 0.16687500000000002
+    },
+    "squad_depth": {
+      "correct": 4,
+      "total": 4,
+      "brier_sum": 0.8313999999999999,
+      "accuracy": 1.0,
+      "mean_brier": 0.20784999999999998
+    },
+    "fatigue": {
+      "correct": 3,
+      "total": 4,
+      "brier_sum": 0.8400000000000001,
+      "accuracy": 0.75,
+      "mean_brier": 0.21000000000000002
+    },
+    "altitude": {
+      "correct": 3,
+      "total": 4,
+      "brier_sum": 1.0,
+      "accuracy": 0.75,
+      "mean_brier": 0.25
+    },
+    "data_quality": {
+      "correct": 3,
+      "total": 4,
+      "brier_sum": 73,
+      "accuracy": 0.75,
+      "mean_brier": 18.25
+    },
+    "mc_home": {
+      "correct": 2,
+      "total": 4,
+      "brier_sum": 1.0989,
+      "accuracy": 0.5,
+      "mean_brier": 0.274725
+    },
+    "mc_draw": {
+      "correct": 1,
+      "total": 4,
+      "brier_sum": 1.7665000000000002,
+      "accuracy": 0.25,
+      "mean_brier": 0.44162500000000005
+    },
+    "mc_away": {
+      "correct": 1,
+      "total": 4,
+      "brier_sum": 1.5666,
+      "accuracy": 0.25,
+      "mean_brier": 0.39165
     }
   },
-  "mean_brier": 0.2581,
-  "skill_pct": -3.2399999999999984
+  "mean_brier": 0.241805,
+  "skill_pct": 3.278000000000003
 }

@@ -1,0 +1,20 @@
+{
+  "m080": {
+    "bookmaker": "Pinnacle",
+    "odds_opening": {
+      "home": 1.4,
+      "draw": 4.5,
+      "away": 9.0
+    },
+    "odds_closing": {
+      "home": 1.35,
+      "draw": 4.8,
+      "away": 10.5
+    },
+    "implied_probability": {
+      "home": 0.74,
+      "draw": 0.2,
+      "away": 0.09
+    }
+  }
+}

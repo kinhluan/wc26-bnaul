@@ -13,6 +13,7 @@ Usage:
     uv run python -m wc26_bnaul.auto_agent --dry-run    # Preview only
     uv run python -m wc26_bnaul.auto_agent --live       # Actually submit
     uv run python -m wc26_bnaul.auto_agent --match m074 # Single match
+    uv run python -m wc26_bnaul.auto_agent --cli-mode     # CLI mode: print prompt, read stdin
 """
 
 import argparse
@@ -30,7 +31,8 @@ from wc26_bnaul.ensemble_predictor import (
     KNOCKOUT_CONFIDENCE_CAP, KNOCKOUT_CONFIDENCE_FLOOR,
     SELECTIVITY_THRESHOLD_LOW, SELECTIVITY_THRESHOLD_HIGH,
 )
-from wc26_bnaul.batch_predict import get_team_data, TEAM_DB, get_venue_data, VENUE_DB
+from wc26_bnaul.batch_predict import get_team_data, get_venue_data
+from wc26_bnaul.json_db import load_json_db
 from wc26_bnaul.prediction_logger import PredictionLogger
 from wc26_bnaul.news_monitor_real import (
     search_news_for_teams,
@@ -38,9 +40,230 @@ from wc26_bnaul.news_monitor_real import (
     fetch_injuries_for_match,
     analyze_injury_impact,
 )
+from wc26_bnaul.json_db import gather_match_context
 
 
 logger = PredictionLogger()
+
+
+# =============================================================================
+# AI PROBABILITY ADJUSTMENT (LLM-powered data enrichment)
+# =============================================================================
+
+def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> float:
+    """
+    Gọi LLM API để lấy điều chỉnh xác suất dựa trên context.
+
+    Hỗ trợ 3 chế độ:
+    - dry_run=True: In preview prompt, trả về 0.0 (không gọi API).
+    - cli_mode=True: In toàn bộ prompt ra stdout, đọc ADJUSTMENT từ stdin
+      (dùng khi chạy với kimi-cli hoặc agent CLI bên ngoài).
+    - Mặc định (dry_run=False, cli_mode=False): Gọi API thật (nếu đã cài
+      openai/kimi client), nếu chưa có thì fallback về 0.0.
+    """
+    if cli_mode:
+        # In toàn bộ prompt ra stdout để CLI agent (kimi-cli, v.v.) đọc
+        print(f"\n{'='*60}")
+        print("LLM PROMPT (cli_mode — output for external CLI agent):")
+        print(f"{'='*60}")
+        print(prompt)
+        print(f"{'='*60}")
+        print("\n[CLI MODE] Waiting for ADJUSTMENT from stdin...")
+        print("Format: ADJUSTMENT: [value]  (e.g., ADJUSTMENT: -2.5)")
+        print("Enter adjustment and press Ctrl+D (Unix) or Ctrl+Z (Windows) when done:")
+        print("-" * 60)
+
+        # Đọc toàn bộ stdin
+        try:
+            raw_input = sys.stdin.read()
+        except KeyboardInterrupt:
+            print("\n[CLI MODE] Interrupted. Returning 0.0")
+            return 0.0
+
+        # Parse ADJUSTMENT từ input
+        adjustment = _parse_adjustment_from_text(raw_input)
+        print(f"[CLI MODE] Parsed adjustment: {adjustment:+.1f}%")
+        return adjustment
+
+    if dry_run:
+        print(f"\n{'='*60}")
+        print("LLM PROMPT (dry_run — would send to API):")
+        print(f"{'='*60}")
+        # In 500 chars đầu để không quá dài
+        preview = prompt[:500] + "..." if len(prompt) > 500 else prompt
+        print(preview)
+        print(f"\n[DRY RUN] Would call LLM API. Returning default adjustment: 0.0")
+        return 0.0
+
+    # --- Real API call mode (production) ---
+    # Thử gọi API nếu đã cài thư viện openai
+    try:
+        import os
+        api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("KIMI_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "[LLM API] CRITICAL ERROR: No API key found (OPENAI_API_KEY or KIMI_API_KEY).\n"
+                "Set one of these environment variables in your .env file:\n"
+                "  OPENAI_API_KEY=your_key\n"
+                "  KIMI_API_KEY=your_key\n"
+                "The agent cannot run without LLM access. Aborting."
+            )
+
+        # Thử dùng openai client (tương thích với nhiều provider: OpenAI, Kimi, v.v.)
+        try:
+            from openai import OpenAI
+        except ImportError:
+            raise RuntimeError(
+                "[LLM API] CRITICAL ERROR: 'openai' package not installed.\n"
+                "Install it with: pip install openai\n"
+                "The agent cannot run without LLM access. Aborting."
+            )
+
+        client = OpenAI(api_key=api_key, base_url=os.environ.get("OPENAI_BASE_URL"))
+        response = client.chat.completions.create(
+            model=os.environ.get("LLM_MODEL", "gpt-4"),
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=150,
+        )
+        content = response.choices[0].message.content
+        adjustment = _parse_adjustment_from_text(content)
+        print(f"[LLM API] Adjustment from API: {adjustment:+.1f}%")
+        return adjustment
+
+    except RuntimeError:
+        raise  # Re-raise critical errors (missing API key, missing package)
+    except Exception as e:
+        print(f"[LLM API] Error calling API: {e}. Returning 0.0")
+        return 0.0
+
+
+def _parse_adjustment_from_text(text: str) -> float:
+    """
+    Parse giá trị ADJUSTMENT từ text.
+    Tìm pattern 'ADJUSTMENT: [value]' hoặc '[+-]number'.
+    """
+    import re
+    # Tìm pattern ADJUSTMENT: [value]
+    match = re.search(r"ADJUSTMENT:\s*([+-]?\d+\.?\d*)", text, re.IGNORECASE)
+    if match:
+        try:
+            return float(match.group(1))
+        except ValueError:
+            pass
+
+    # Fallback: tìm bất kỳ số nào có dấu + hoặc - trong text
+    match = re.search(r"([+-]?\d+\.?\d*)", text)
+    if match:
+        try:
+            return float(match.group(1))
+        except ValueError:
+            pass
+
+    # Nếu không parse được, trả về 0.0
+    print(f"[LLM API] Could not parse adjustment from: {text[:100]}... Returning 0.0")
+    return 0.0
+
+
+def get_ai_probability_adjustment(
+    match_id: str,
+    home: str,
+    away: str,
+    base_prob: float,
+    ref_name: str = "Szymon Marciniak",
+    dry_run: bool = False,
+    cli_mode: bool = False,
+) -> float:
+    """
+    Tích hợp LLM để điều chỉnh xác suất dựa trên dữ liệu JSON context.
+    
+    Args:
+        match_id: ID trận đấu (e.g., "m080")
+        home: Tên đội nhà
+        away: Tên đội khách
+        base_prob: Xác suất gốc từ ensemble model (0.0 - 1.0)
+        ref_name: Tên trọng tài (default: Szymon Marciniak)
+        dry_run: Nếu True, chỉ in prompt ra màn hình, không gọi API thật
+        cli_mode: Nếu True, in prompt ra stdout và đọc ADJUSTMENT từ stdin
+                 (dùng khi chạy với kimi-cli hoặc agent CLI bên ngoài)
+    
+    Returns:
+        Xác suất cuối cùng sau khi áp dụng điều chỉnh từ LLM (đã clamp 0.01-0.99)
+    """
+    print(f"\n{'='*60}")
+    print(f"AI PROBABILITY ADJUSTMENT: {match_id} — {home} vs {away}")
+    print(f"{'='*60}")
+    
+    # Step 1: Gather match context from JSON databases
+    print(f"[Step 1] Gathering match context from JSON databases...")
+    context = gather_match_context(match_id, home, away, ref_name)
+    
+    # Step 2: Build LLM prompt with full context
+    print(f"[Step 2] Building LLM prompt...")
+    
+    prompt = f"""You are a football match prediction expert with access to real-time web search.
+
+TASK: Analyze the following match data and provide a PROBABILITY ADJUSTMENT for the home team's win probability.
+
+MATCH: {home} vs {away} (Match ID: {match_id})
+BASE HOME PROBABILITY: {base_prob:.1%}
+
+--- FULL MATCH CONTEXT (JSON) ---
+{json.dumps(context, indent=2, ensure_ascii=False)}
+--- END CONTEXT ---
+
+INSTRUCTIONS:
+1. Use your web search capability to find the LATEST news about:
+   - Injuries or suspensions for either team (especially key players)
+   - Recent form changes (last 24-48 hours)
+   - Betting odds movements (significant shifts)
+   - Weather conditions at the venue
+   - Any tactical or lineup announcements
+
+2. Compare the JSON context above with real-time data. Identify any discrepancies.
+
+3. Provide a SINGLE NUMERIC ADJUSTMENT in percentage points:
+   - Use POSITIVE values to INCREASE home probability (e.g., +2.5, +1.0)
+   - Use NEGATIVE values to DECREASE home probability (e.g., -3.0, -1.5)
+   - Use 0.0 if no adjustment is needed
+   - Range: typically -5.0 to +5.0
+
+4. Your response MUST contain the adjustment in this exact format:
+   ADJUSTMENT: [value]
+   
+   Example: "ADJUSTMENT: -2.5" or "ADJUSTMENT: +1.0" or "ADJUSTMENT: 0.0"
+
+5. Briefly explain your reasoning in 1-2 sentences after the adjustment.
+
+IMPORTANT: Be conservative. Small adjustments are better than large ones. When in doubt, use 0.0.
+"""
+    
+    # Step 3: Call LLM API (or dry_run, or cli_mode)
+    print(f"[Step 3] Calling LLM API...")
+    adjustment = call_llm_api(prompt, dry_run=dry_run, cli_mode=cli_mode)
+    
+    # Step 4: Apply adjustment to base_prob
+    print(f"[Step 4] Applying adjustment...")
+    
+    # Convert adjustment from percentage points to decimal
+    adjustment_decimal = adjustment / 100.0
+    adjusted_prob = base_prob + adjustment_decimal
+    
+    # Clamp to valid range [0.01, 0.99]
+    final_prob = max(0.01, min(0.99, adjusted_prob))
+    
+    # Step 5: Log the adjustment
+    print(f"\n{'='*60}")
+    print(f"ADJUSTMENT RESULT")
+    print(f"{'='*60}")
+    print(f"  Base probability:     {base_prob:.2%}")
+    print(f"  AI adjustment:        {adjustment:+.1f}%")
+    print(f"  Adjusted probability: {adjusted_prob:.2%}")
+    if final_prob != adjusted_prob:
+        print(f"  Clamped to:           {final_prob:.2%} (out of valid range)")
+    print(f"{'='*60}")
+    
+    return final_prob
 
 
 # =============================================================================
@@ -555,7 +778,7 @@ class AgentReasoningLoop:
         news = iter1.inputs["news"]
         injuries = iter1.inputs["injuries"]
         
-        # Run ensemble model with ALL parameters (ELO, squad_depth, venue)
+        # Run ensemble model with ALL parameters (ELO, squad_depth, venue, INJURIES)
         predictor = EnsemblePredictor()
         result = predictor.predict(
             home_team=self.home,
@@ -572,6 +795,8 @@ class AgentReasoningLoop:
             away_form=away_data["form"],
             home_squad_depth=home_data.get("squad_depth", 5.0),
             away_squad_depth=away_data.get("squad_depth", 5.0),
+            home_injuries=home_data.get("injuries", 0),
+            away_injuries=away_data.get("injuries", 0),
             knockout=True,
             home_rest_days=env["home_rest_days"],
             away_rest_days=env["away_rest_days"],
@@ -745,7 +970,7 @@ class AgentReasoningLoop:
 # AUTO PREDICT MATCH (with reasoning loop)
 # =============================================================================
 
-def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True, check_news: bool = True) -> bool:
+def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True, check_news: bool = True, cli_mode: bool = False) -> bool:
     """
     Fully autonomous prediction for a single match with multi-step reasoning.
     
@@ -780,6 +1005,138 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
     final = report["final_prediction"]
     home_prob = final["home_prob"]
     away_prob = final["away_prob"]
+    
+    # AI Probability Adjustment (LLM-powered data enrichment)
+    # Only apply for real teams (not placeholders)
+    # In CLI mode, skip the reasoning loop and go straight to LLM prompt
+    if cli_mode and not home.startswith("W") and not away.startswith("W") and not home.startswith("L") and not away.startswith("L"):
+        # Build context directly for CLI mode (skip reasoning loop)
+        from wc26_bnaul.json_db import gather_match_context
+        print(f"\n{'='*60}")
+        print(f"AI PROBABILITY ADJUSTMENT: {match_id} — {home} vs {away}")
+        print(f"{'='*60}")
+        print(f"[Step 1] Gathering match context from JSON databases...")
+        context = gather_match_context(match_id, home, away)
+        print(f"[Step 2] Building LLM prompt...")
+        
+        prompt = f"""You are a football match prediction expert with access to real-time web search.
+
+TASK: Analyze the following match data and provide a PROBABILITY ADJUSTMENT for the home team's win probability.
+
+MATCH: {home} vs {away} (Match ID: {match_id})
+BASE HOME PROBABILITY: {home_prob:.1%}
+
+--- FULL MATCH CONTEXT (JSON) ---
+{json.dumps(context, indent=2, ensure_ascii=False)}
+--- END CONTEXT ---
+
+INSTRUCTIONS:
+1. Use your web search capability to find the LATEST news about:
+   - Injuries or suspensions for either team (especially key players)
+   - Recent form changes (last 24-48 hours)
+   - Betting odds movements (significant shifts)
+   - Weather conditions at the venue
+   - Any tactical or lineup announcements
+
+2. Compare the JSON context above with real-time data. Identify any discrepancies.
+
+3. Provide a SINGLE NUMERIC ADJUSTMENT in percentage points:
+   - Use POSITIVE values to INCREASE home probability (e.g., +2.5, +1.0)
+   - Use NEGATIVE values to DECREASE home probability (e.g., -3.0, -1.5)
+   - Use 0.0 if no adjustment is needed
+   - Range: typically -5.0 to +5.0
+
+4. Your response MUST contain the adjustment in this exact format:
+   ADJUSTMENT: [value]
+   
+   Example: "ADJUSTMENT: -2.5" or "ADJUSTMENT: +1.0" or "ADJUSTMENT: 0.0"
+
+5. Briefly explain your reasoning in 1-2 sentences after the adjustment.
+
+IMPORTANT: Be conservative. Small adjustments are better than large ones. When in doubt, use 0.0.
+"""
+        
+        print(f"[Step 3] Calling LLM API...")
+        adjustment = call_llm_api(prompt, dry_run=dry_run, cli_mode=cli_mode)
+        
+        print(f"[Step 4] Applying adjustment...")
+        adjustment_decimal = adjustment / 100.0
+        adjusted_prob = home_prob + adjustment_decimal
+        final_prob = max(0.01, min(0.99, adjusted_prob))
+        
+        print(f"\n{'='*60}")
+        print(f"ADJUSTMENT RESULT")
+        print(f"{'='*60}")
+        print(f"  Base probability:     {home_prob:.2%}")
+        print(f"  AI adjustment:        {adjustment:+.1f}%")
+        print(f"  Adjusted probability: {adjusted_prob:.2%}")
+        if final_prob != adjusted_prob:
+            print(f"  Clamped to:           {final_prob:.2%} (out of valid range)")
+        print(f"{'='*60}")
+        
+        home_prob = final_prob
+        away_prob = 1.0 - home_prob
+        
+        # Skip the rest of the function (reasoning loop, etc.)
+        # BUT still submit if not dry_run
+        if dry_run:
+            print(f"\n{'='*60}")
+            print(f"FINAL: {home} {home_prob:.2%} vs {away} {away_prob:.2%}")
+            print(f"{'='*60}")
+            print(f"🚫 DRY RUN — Would submit:")
+            print(f"  {match_id}: {home} {home_prob:.2f} vs {away} {away_prob:.2f}")
+            print(f"{'='*60}")
+            return True
+        
+        # LIVE mode: submit the prediction
+        print(f"\n{'='*60}")
+        print(f"FINAL: {home} {home_prob:.2%} vs {away} {away_prob:.2%}")
+        print(f"{'='*60}")
+        print(f"🚀 SUBMITTING...")
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                api_request("POST", "/predictions", {
+                    "match_id": match_id,
+                    "format": "binary",
+                    "p": [round(home_prob, 2), round(away_prob, 2)],
+                    "reasoning": f"CLI mode adjustment: {adjustment:+.1f}% | Base: {home_prob:.2%}",
+                })
+                
+                # Log prediction
+                logger.log_prediction(
+                    match_id=match_id,
+                    home_team=home,
+                    away_team=away,
+                    submitted_probs=[round(home_prob, 2), round(away_prob, 2)],
+                    components={"cli_adjustment": adjustment, "base_prob": home_prob},
+                    predicted_score="1-0",
+                    reasoning=f"CLI mode adjustment: {adjustment:+.1f}%",
+                )
+                
+                print(f"  ✅ Submitted: {match_id}")
+                return True
+            except Exception as e:
+                if "429" in str(e) and attempt < max_retries - 1:
+                    wait_time = (attempt + 1) * 5
+                    print(f"  ⚠️  Rate limited (429). Retrying in {wait_time}s... ({attempt+1}/{max_retries})")
+                    time.sleep(wait_time)
+                else:
+                    print(f"  ❌ Failed: {e}")
+                    return False
+        return True
+    
+    if not home.startswith("W") and not away.startswith("W") and not home.startswith("L") and not away.startswith("L"):
+        home_prob = get_ai_probability_adjustment(
+            match_id=match_id,
+            home=home,
+            away=away,
+            base_prob=home_prob,
+            dry_run=dry_run,
+            cli_mode=cli_mode,
+        )
+        away_prob = 1.0 - home_prob
+    
     score = final["score"]
     confidence = final["confidence"]
     components = final["components"]
@@ -795,9 +1152,9 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
         reasoning = reasoning[:497] + "..."
     
     print(f"\n{'='*60}")
-    print(f"FINAL: {home} {home_prob:.0%} vs {away} {away_prob:.0%}")
+    print(f"FINAL: {home} {home_prob:.2%} vs {away} {away_prob:.2%}")
     print(f"Score: {score}")
-    print(f"Confidence: {confidence:.0%}")
+    print(f"Confidence: {confidence:.2%}")
     print(f"{'='*60}")
     
     # Submit
@@ -843,12 +1200,13 @@ def auto_predict_match(match_id: str, home: str, away: str, dry_run: bool = True
     return False
 
 
-def run_auto_agent(dry_run: bool = True, match_id: str = None, check_news: bool = True):
+def run_auto_agent(dry_run: bool = True, match_id: str = None, check_news: bool = True, cli_mode: bool = False):
     """Run auto-agent for all open matches or a specific match."""
     print(f"\n{'='*70}")
     print(f"AUTO AGENT — wc26-bnaul (Multi-Step Reasoning)")
     print(f"Mode: {'DRY RUN' if dry_run else 'LIVE'}")
     print(f"News check: {'YES' if check_news else 'NO (fast mode)'}")
+    print(f"CLI mode: {'YES' if cli_mode else 'NO'}")
     print(f"Time: {datetime.now(timezone.utc).isoformat()}")
     print(f"{'='*70}")
     
@@ -871,7 +1229,12 @@ def run_auto_agent(dry_run: bool = True, match_id: str = None, check_news: bool 
         home = match.get("home", "?")
         away = match.get("away", "?")
         
-        if auto_predict_match(mid, home, away, dry_run=dry_run, check_news=check_news):
+        # P2: Skip placeholder teams (W74, W75, L101, etc.)
+        if home.startswith("W") or away.startswith("W") or home.startswith("L") or away.startswith("L"):
+            print(f"Skipping {mid}: {home} vs {away} — placeholder teams")
+            continue
+        
+        if auto_predict_match(mid, home, away, dry_run=dry_run, check_news=check_news, cli_mode=cli_mode):
             success_count += 1
         
         # Rate limit: be nice to API (2 seconds between requests)
@@ -887,6 +1250,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Preview without submitting")
     parser.add_argument("--live", action="store_true", help="Actually submit")
     parser.add_argument("--match", help="Specific match ID (default: all open)")
+    parser.add_argument("--cli-mode", action="store_true", help="Enable CLI mode: print full LLM prompt to stdout and read ADJUSTMENT from stdin (for kimi-cli or other external agent CLI)")
     parser.add_argument("--fast", action="store_true", help="Skip news check (NOT RECOMMENDED)")
     
     args = parser.parse_args()
@@ -894,7 +1258,7 @@ def main():
     dry_run = not args.live
     # Default: check_news = True (always check news unless --fast)
     check_news = not args.fast
-    run_auto_agent(dry_run=dry_run, match_id=args.match, check_news=check_news)
+    run_auto_agent(dry_run=dry_run, match_id=args.match, check_news=check_news, cli_mode=args.cli_mode)
 
 
 if __name__ == "__main__":

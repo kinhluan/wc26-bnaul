@@ -75,14 +75,15 @@ from dataclasses import dataclass
 # =============================================================================
 
 # Ensemble weights (calibrated on historical data + Amir Motefaker dataset)
+# FIXED: weights now sum to 1.0 (was 1.10)
 WEIGHT_ELO = 0.30
 WEIGHT_FIFA = 0.10
 WEIGHT_XG = 0.20
 WEIGHT_BETTING = 0.10
 WEIGHT_FORM = 0.15
 WEIGHT_SQUAD_DEPTH = 0.05
-WEIGHT_H2H = 0.10
-WEIGHT_INJURIES = 0.10
+WEIGHT_H2H = 0.05   # REDUCED from 0.10
+WEIGHT_INJURIES = 0.05  # REDUCED from 0.10
 
 # SKILL Optimization constants
 KNOCKOUT_CONFIDENCE_CAP = 0.65
@@ -93,7 +94,7 @@ SELECTIVITY_THRESHOLD_HIGH = 0.52
 HOME_ADVANTAGE_BOOST = 0.05
 
 # Knockout draw awareness (NEW)
-KNOCKOUT_BASE_DRAW = 0.25  # CHANGED: 0.15 → 0.25 (higher draw probability)
+KNOCKOUT_BASE_DRAW = 0.30  # CHANGED: 0.25 → 0.30 (higher draw probability, learned from m075, m076, m077)
 KNOCKOUT_CLOSE_MATCH_CAP = 0.55  # NEW: For ELO gap < 100, cap at 55%
 KNOCKOUT_CLOSE_ELO_GAP = 100  # NEW: Threshold for "close match"
 KNOCKOUT_ELO_DISCOUNT = 0.70  # NEW: Reduce ELO gap by 30% in knockout (learned from m075, m076)
@@ -490,13 +491,18 @@ class EnsemblePredictor:
         # Penalty shootouts make even true 70% favorites ~50/50
         # Learned from competitor analysis (wc-kimi caps at 65%, jason burned by 82%)
         # Principle 5: For close matches (ELO gap < 100), cap at 55%
+        # NEW: For ALL knockout matches, apply stricter cap when model is uncertain
         if knockout:
             if home_elo > 0 and away_elo > 0:
                 elo_gap = abs(home_elo - away_elo)
                 if elo_gap < KNOCKOUT_CLOSE_ELO_GAP:
-                    # Close match → lower cap
+                    # Close match → very conservative
                     effective_cap = KNOCKOUT_CLOSE_MATCH_CAP
+                elif elo_gap < 200:
+                    # Moderate gap → medium cap
+                    effective_cap = 0.60
                 else:
+                    # Clear favorite → standard cap
                     effective_cap = KNOCKOUT_CONFIDENCE_CAP
             else:
                 effective_cap = KNOCKOUT_CONFIDENCE_CAP

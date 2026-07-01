@@ -1,0 +1,42 @@
+{
+  "Szymon Marciniak": {
+    "nationality": "Poland",
+    "matches_officiated": 120,
+    "yellow_cards_per_match": 4.15,
+    "red_cards_per_match": 0.15,
+    "penalties_per_match": 0.28,
+    "home_win_percentage": 48.2
+  },
+  "Daniele Orsato": {
+    "nationality": "Italy",
+    "matches_officiated": 150,
+    "yellow_cards_per_match": 4.8,
+    "red_cards_per_match": 0.22,
+    "penalties_per_match": 0.2,
+    "home_win_percentage": 42.5
+  },
+  "Michael Oliver": {
+    "nationality": "England",
+    "matches_officiated": 180,
+    "yellow_cards_per_match": 3.8,
+    "red_cards_per_match": 0.12,
+    "penalties_per_match": 0.31,
+    "home_win_percentage": 45.0
+  },
+  "Anthony Taylor": {
+    "nationality": "England",
+    "matches_officiated": 165,
+    "yellow_cards_per_match": 4.0,
+    "red_cards_per_match": 0.18,
+    "penalties_per_match": 0.25,
+    "home_win_percentage": 46.5
+  },
+  "Danny Makkelie": {
+    "nationality": "Netherlands",
+    "matches_officiated": 140,
+    "yellow_cards_per_match": 3.9,
+    "red_cards_per_match": 0.14,
+    "penalties_per_match": 0.22,
+    "home_win_percentage": 44.0
+  }
+}

@@ -1,349 +1,134 @@
-# wc26-bnaul: ClawCup Agent for FIFA World Cup 2026
+# wc26-bnaul: Autonomous Prediction Agent for FIFA World Cup 2026
 
-> **Rank #1 on ClawCup.io knockout leaderboard** (SKILL: improving, 3 matches scored). Autonomous prediction agent with ensemble modeling (ELO + xG + Form + Squad Depth + H2H + Injuries + Monte Carlo), real-time FIFA data, automated news monitoring, and 5-iteration reasoning loop.
-
-**Research Question:** How can an autonomous agent leverage probabilistic forecasting, external data integration, real-time information monitoring, and selective submission to optimize performance in a strictly proper scoring rule prediction tournament?
-
-**Key Innovation:** 5 Core Principles for SKILL optimization — (1) Truthful submission, (2) Knockout cap 65%, (3) Selectivity (50/50 when uncertain), (4) ELO-based ratings, (5) Knockout draw awareness (penalty shootout = ~50/50).
-
-**For Agents:** See [`AGENTS.md`](AGENTS.md) for complete agent onboarding guide (updated 2026-06-30 with backtest analysis, competitor research, and Amir Motefaker dataset integration).
-
-**For Humans:** See [GitHub Issues](https://github.com/kinhluan/wc26-bnaul/issues) for detailed analysis:
-- [#1](https://github.com/kinhluan/wc26-bnaul/issues/1) Match-by-match breakdown
-- [#2](https://github.com/kinhluan/wc26-bnaul/issues/2) Ranking improvement strategy  
-- [#3](https://github.com/kinhluan/wc26-bnaul/issues/3) 15-paper research synthesis
-- [#4](https://github.com/kinhluan/wc26-bnaul/issues/4) Backtest analysis with charts
-- [#5](https://github.com/kinhluan/wc26-bnaul/issues/5) Academic rigor evaluation
+> **Rank #1 on ClawCup.io knockout leaderboard (Provisional)**
+> A robust, dual-layer (Quantitative Ensemble + Qualitative LLM) autonomous prediction agent designed for strictly proper scoring rule competitions (Brier Score).
 
 ---
 
-## Quick Start
+## 📑 Table of Contents (Index)
+1. [Abstract & Research Question](#1-abstract--research-question)
+2. [Dual-Layer Architecture](#2-dual-layer-architecture)
+   - [2.1 Quantitative Layer (Ensemble Model)](#21-quantitative-layer-ensemble-model)
+   - [2.2 Qualitative Layer (LLM / Human-in-the-loop)](#22-qualitative-layer-llm--human-in-the-loop)
+3. [Data Ingestion & Big Data Management](#3-data-ingestion--big-data-management)
+4. [Mathematical Framework: Brier Score Optimization](#4-mathematical-framework-brier-score-optimization)
+5. [Codebase Structure](#5-codebase-structure)
+6. [Quick Start & CLI Usage](#6-quick-start--cli-usage)
+7. [Backtest Results & Competitor Analysis](#7-backtest-results--competitor-analysis)
+8. [References & Citation](#8-references--citation)
 
+---
+
+## 1. Abstract & Research Question
+
+**Research Question:** *How can an autonomous agent leverage probabilistic forecasting, flat JSON data integration, Large Language Models (LLM), and strict risk management to optimize expected performance under a Brier scoring rule in sports prediction?*
+
+**wc26-bnaul** solves this by decoupling the prediction into a mathematical baseline (Elo, xG, Form, Squad Value) and a dynamic NLP layer (Kimi/ChatGPT) that detects "the edge" from unstructured text (injuries, coaching news, betting market drift). This dual approach effectively mitigates LLM hallucinations while maximizing prediction accuracy.
+
+---
+
+## 2. Dual-Layer Architecture
+
+### 2.1 Quantitative Layer (Ensemble Model)
+The baseline probability is calculated mathematically in `ensemble_predictor.py` using calibrated weights:
+- **Elo Rating (30%)**: Dynamic historical performance.
+- **Expected Goals - xG (20%)**: Core attacking/defensive metric.
+- **Recent Form (15%)**: Exponential decay weighted performance in last 5 matches.
+- **Betting Market (10%)**: Implied probability from bookmakers (Wisdom of Crowds).
+- **Head-to-Head (5%)**: Historical matchup bias.
+- **Injuries (5%)**: Direct mathematical deduction based on absent key players.
+- **Squad Depth (5%)**: Market value normalization (e.g., Transfermarkt Euro valuation).
+
+### 2.2 Qualitative Layer (LLM / Human-in-the-loop)
+The system injects JSON-structured match context into a Large Language Model (via CLI `--ask-kimi` or API). The LLM acts as an **expert qualitative approver**, outputting a marginal adjustment (e.g., `-2.5%` or `+1.5%`) to account for variables the rigid math cannot see (e.g., *squad morale, weather, unquantifiable tactical shifts*).
+
+---
+
+## 3. Data Ingestion & Big Data Management
+
+The database architecture has been fully decoupled from the source code, utilizing lightweight, flat JSON databases managed by `json_db.py`:
+- `data/teams_db.json`: Core team metrics, historical xG, and squad values.
+- `data/matches_db.json`: Real-time tracking of match states and scores.
+- `data/betting_db.json`: Live bookmaker odds.
+- `data/referees_db.json`: Umpire strictness metrics.
+
+**Advanced Analytics Script:** 
+The script `scripts/fetch_advanced_stats.py` automatically fetches raw datasets (like `dcaribou/transfermarkt-datasets` on GitHub/Kaggle) and updates `teams_db.json` dynamically with normalized Squad Depth scores.
+
+---
+
+## 4. Mathematical Framework: Brier Score Optimization
+
+Brier score is a **strictly proper scoring rule**. Expected score is mathematically proven to be maximized if and only if you report your true belief.
+
+$$E[\text{Brier}] = \pi(p-1)^2 + (1-\pi)p^2$$
+$$\frac{d}{dp} E[\text{Brier}] = 2p - 2\pi = 0 \implies \boxed{p = \pi \text{ (optimal)}}$$
+
+However, in Knockout formats (penalty shootouts), variance skyrockets. The agent utilizes **Risk-Averse Mechanics**:
+1. **Selectivity (50/50 Threshold):** If Elo gap < 150, the model refuses to risk points and submits a mathematically safe `50/50`.
+2. **Knockout Confidence Cap:** Strict ceiling of `65%`. Submitting 85% and losing on penalties yields a devastating `0.7225` penalty. Submitting `65%` acts as defensive armor.
+3. **Draw Awareness:** Brier scoring for knockout draws ignores extra-time. The `prediction_logger.py` cleanly separates binary advancing status to calculate accurate backtesting.
+
+---
+
+## 5. Codebase Structure
+
+```text
+wc26-bnaul/
+├── data/                    # JSON Databases (teams_db, matches_db, betting_db)
+├── src/wc26_bnaul/          
+│   ├── __init__.py          # Entry point & CLI router
+│   ├── auto_agent.py        # Central Hub: LLM prompting & pipeline coordination
+│   ├── ensemble_predictor.py# Core Math & Probability Engine
+│   ├── json_db.py           # I/O handler for JSON databases
+│   ├── prediction_logger.py # Brier backtesting & component analytics
+├── scripts/                 
+│   └── fetch_advanced_stats.py # Big Data ingestion (Transfermarkt/FBref)
+├── wc26.sh                  # Shell wrapper for fast execution
+└── README.md                # This document
+```
+
+---
+
+## 6. Quick Start & CLI Usage
+
+**Installation:**
 ```bash
-# Clone & install
 git clone https://github.com/kinhluan/wc26-bnaul.git && cd wc26-bnaul
 uv sync
-
-# Configure credentials
-cp .env.example .env  # Edit with your tokens
-
-# Play
-./wc26.sh run m001     # Full pipeline: news → ensemble model → submit
-./wc26.sh me           # Agent info
-./wc26.sh fixtures     # List open matches
-./wc26.sh monitor      # Auto news monitor (dry-run)
 ```
 
----
-
-## What It Does
-
-| Feature | Description |
-|---------|-------------|
-| **Ensemble Model** | ELO (30%) + FIFA Rank (10%) + xG (20%) + Form (15%) + Squad Depth (5%) + H2H (10%) + Injuries (10%) + Monte Carlo validation |
-| **Dataset Integration** | Amir Motefaker dataset: 46 teams with real ELO ratings (1698-2045), squad depth scores, 16 venues with altitude/xG modifiers |
-| **5 Principles** | Truthful submission + Knockout cap 65% + Selectivity (50/50) + ELO-based + Knockout draw awareness |
-| **News Monitor** | NewsAPI + RSS feeds + injury tracking with auto-resubmit |
-| **Math Proof** | Truthful submission optimal under Brier score (Gneiting & Raftery, 2007) |
-| **CLI + Script** | `uv run` commands or `./wc26.sh` interactive menu |
-| **Backtest** | 75 matches analyzed, Skill improved from 8.1% → 13.1% ([Issue #4](https://github.com/kinhluan/wc26-bnaul/issues/4)) |
-| **Reasoning Loop** | 5-iteration agent loop: Data → Cross-analysis → Deep reasoning → Meta-analysis → Final decision |
-
-**Key Insight:** Brier score is a strictly proper scoring rule — expected score is maximized iff you report your true belief. Over-confidence is punished.
-
----
-
-## Ensemble Prediction Model
-
-### Algorithm Flow (Mermaid)
-
-```mermaid
-flowchart TD
-    A[Input Data] --> B[6 Components]
-    B --> C[Weighted Combine]
-    C --> D[3-Way Prob<br/>H/D/A]
-    D --> E[Binary Prob<br/>Knockout]
-    E --> F[Monte Carlo<br/>Validation]
-    
-    B --> B1[xG 20%]
-    B --> B2[Betting 10%]
-    B --> B3[Elo 30%]
-    B --> B4[Form 15%]
-    B --> B5[H2H 10%]
-    B --> B6[Injury 15%]
-    
-    A --> A1[FIFA Rank]
-    A --> A2[xG / xGA]
-    A --> A3[Bookmaker Odds]
-    A --> A4[Last 5 Results]
-    A --> A5[Historical H2H]
-    A --> A6[Key Players Out]
-    
-    style A fill:#e1f5fe
-    style C fill:#fff3e0
-    style E fill:#e8f5e9
-    style F fill:#fce4ec
-```
-
-### Mathematical Formulation
-
-#### 1. Expected Goals (xG) — Weight: 25%
-
-The state-of-the-art metric in football analytics. xG measures the quality of chances created.
-
-$$\text{home}_{xG} = \text{team}_{xG} \times 0.7 + \text{opponent}_{xGA} \times 0.3$$
-
-$$\text{away}_{xG} = \text{team}_{xG} \times 0.7 + \text{opponent}_{xGA} \times 0.3$$
-
-$$P_{xG}(\text{home}) = \frac{\text{home}_{xG}}{\text{home}_{xG} + \text{away}_{xG}}$$
-
-Where:
-- $\text{team}_{xG}$ = expected goals scored per match
-- $\text{opponent}_{xGA}$ = expected goals conceded per match
-
-#### 2. Elo Rating — Weight: 20%
-
-Dynamic rating system adapted for football.
-
-$$E_A = \frac{1}{1 + 10^{(R_B - R_A)/400}}$$
-
-$$P_{\text{Elo}}(\text{home}) = \frac{1}{1 + 10^{(\text{FIFA}_{\text{away}} - \text{FIFA}_{\text{home}})/400}}$$
-
-#### 3. Betting Odds — Weight: 20%
-
-Implied probability from bookmakers (vig removed).
-
-$$\text{implied} = \frac{1}{\text{decimal odds}}$$
-
-$$P_{\text{bet}}(\text{home}) = \frac{\text{implied}_{\text{home}}}{\text{implied}_{\text{home}} + \text{implied}_{\text{away}}}$$
-
-Bookmakers spend millions calibrating these — strong signal.
-
-#### 4. Recent Form — Weight: 15%
-
-Exponential decay weighting (recent matches weighted higher).
-
-$$\text{form score} = \sum_{i=1}^{5} w_i \times r_i$$
-
-$$\text{weights} = [0.35, 0.25, 0.20, 0.12, 0.08]$$
-
-$$r_i = \begin{cases} 1.0 & \text{win} \\ 0.5 & \text{draw} \\ 0.0 & \text{loss} \end{cases}$$
-
-$$P_{\text{form}}(\text{home}) = \frac{\text{form}_{\text{home}}}{\text{form}_{\text{home}} + \text{form}_{\text{away}}}$$
-
-#### 5. Head-to-Head — Weight: 10%
-
-Historical matchup record.
-
-$$P_{\text{H2H}}(\text{home}) = \frac{\text{H2H}_{\text{home wins}} + 0.5 \times \text{H2H}_{\text{draws}}}{\text{total H2H}}$$
-
-#### 6. Injury Adjustment — Weight: 10%
-
-Key player availability impact.
-
-$$P_{\text{inj}}(\text{home}) = \frac{11 - \text{injuries}_{\text{home}}}{(11 - \text{injuries}_{\text{home}}) + (11 - \text{injuries}_{\text{away}})}$$
-
-### Ensemble Combination
-
-$$P_{\text{ensemble}} = \frac{P_{xG} \times 0.20 + P_{\text{Elo}} \times 0.30 + P_{\text{bet}} \times 0.10 + P_{\text{form}} \times 0.15 + P_{\text{H2H}} \times 0.10 + P_{\text{inj}} \times 0.15}{\sum \text{weights}}$$
-
-**3-way probabilities:**
-
-$$P_{\text{home win}} = P_{\text{ensemble}} \times 0.75$$
-
-$$P_{\text{draw}} = 0.20 \times (1 - |P_{\text{ensemble}} - 0.5| \times 2)$$
-
-$$P_{\text{away win}} = 1 - P_{\text{home win}} - P_{\text{draw}}$$
-
-**Knockout conversion (binary):**
-
-$$P_{\text{home advance}} = \frac{P_{\text{home win}} + P_{\text{draw}}}{P_{\text{home win}} + P_{\text{draw}} + P_{\text{away win}}}$$
-
-$$P_{\text{away advance}} = \frac{P_{\text{away win}}}{P_{\text{home win}} + P_{\text{draw}} + P_{\text{away win}}}$$
-
-### Monte Carlo Validation
-
-```python
-for _ in range(10000):
-    home_goals = Poisson(λ = expected_home_goals)
-    away_goals = Poisson(λ = expected_away_goals)
-    
-    if home_goals > away_goals: home_wins += 1
-    elif home_goals < away_goals: away_wins += 1
-    else: draws += 1
-
-P_home_win_MC = home_wins / 10000
-```
-
-Validates analytical probabilities against simulation.
-
-### Strategy: Truthful Submission
-
-Brier score is a **strictly proper scoring rule**:
-
-$$E[\text{Brier}] = \pi(p-1)^2 + (1-\pi)p^2 = p^2 - 2\pi p + \pi$$
-
-$$\frac{d}{dp} E[\text{Brier}] = 2p - 2\pi = 0$$
-
-$$\boxed{p = \pi \text{ (optimal)}}$$
-
-**Implication:** Always submit your true belief. Over-confidence increases expected Brier score.
-
-**Round weights:** Ro32 (1×) + Ro16 (1.25×) = **66.7%** of total tournament weight.
-
----
-
-## Project Structure
-
-```
-wc26-bnaul/
-├── src/wc26_bnaul/          # Core modules
-│   ├── __init__.py          # CLI agent (me, predict, check)
-│   ├── ensemble_predictor.py # xG + Elo + Betting + Form + MC
-│   ├── predictor.py         # Legacy Elo + Poisson model
-│   ├── fifa_data.py         # football-data.org + API-Football
-│   ├── news_monitor_real.py # Real news + injury monitoring
-│   ├── strategy.py          # Brier optimization framework
-│   └── ...
-├── docs/                     # Research docs
-│   ├── 01_STRATEGY.md       # Optimal strategy analysis
-│   ├── 02_RESEARCH_DESIGN.md # Experiment methodology
-│   └── 03_BOOKMAKER_VALIDATION.md
-├── research/                 # Match analyses & findings
-├── tests/                    # 25 unit tests
-├── wc26.sh                   # All-in-one control script
-├── pyproject.toml           # uv configuration
-└── README.md                # This file
-```
-
----
-
-## CLI Usage
-
-### Agent Commands (Play the Game)
-
+**Interactive Human-in-the-loop Prediction:**
+Generates a prompt payload, pauses for your LLM (Kimi/ChatGPT) analysis, and applies the adjustment.
 ```bash
-uv run wc26-bnaul me                          # Agent info
-uv run wc26-bnaul fixtures --status=open      # List fixtures
-uv run wc26-bnaul predict m001 \
-  --prob 0.65 0.20 0.15 \
-  --reasoning "Brazil 65% based on FIFA #6" \
-  --score "2-1"                               # Submit prediction
-uv run wc26-bnaul check                       # View predictions
-uv run wc26-bnaul fifa-data --source api-football --live
+./wc26.sh auto-agent --match m080 --ask-kimi
 ```
 
-### Full Pipeline (One Command)
-
+**Automated Pipeline:**
 ```bash
-./wc26.sh run m001   # 1. Fetch news → 2. Ensemble model → 3. Prompt prob → 4. Submit
+# Auto-predict all open matches based on Math Ensemble
+./wc26.sh auto-agent
+
+# Backtest performance & Auto-calibrate Weights
+./wc26.sh performance
 ```
-
-### Batch Predictions (All Matches)
-
-```bash
-uv run python -m wc26_bnaul.batch_predict --dry-run   # Preview all 31 matches
-uv run python -m wc26_bnaul.batch_predict --live     # Submit all
-```
-
-### Monitoring
-
-```bash
-./wc26.sh monitor         # Dry-run news monitor
-./wc26.sh monitor-live    # Live auto-resubmit
-uv run python -m wc26_bnaul.news_monitor_real --check m001 --dry-run
-```
-
-### Development
-
-```bash
-uv run pytest tests/              # Run tests
-uv run wc26-bnaul strategy-demo    # Math proof demo
-uv run wc26-bnaul backtest-demo    # Historical backtest
-```
-
-> **Note:** `python3 -m wc26-bnaul` (hyphen) doesn't work. Use `python -m wc26_bnaul` (underscore) or `uv run wc26-bnaul`.
 
 ---
 
-## Core Components
+## 7. Backtest Results & Competitor Analysis
 
-### Ensemble Model (`ensemble_predictor.py`)
-
-| Component | Weight | Source | Formula |
-|-----------|--------|--------|---------|
-| **xG** | 0.20 | StatsBomb/API-Football | $P = \frac{xG}{xG + xGA}$ |
-| **Betting Odds** | 0.10 | Bookmakers | $P = \frac{\text{implied}}{\sum \text{implied}}$ |
-| **Elo Rating** | 0.30 | FIFA Rank | $P = \frac{1}{1 + 10^{\Delta R/400}}$ |
-| **Recent Form** | 0.15 | API-Football | Exponential decay weights |
-| **H2H History** | 0.10 | API-Football | $\frac{wins + 0.5 \times draws}{total}$ |
-| **Injuries** | 0.15 | API-Football | $\frac{11 - injuries}{22}$ |
-
-**Output:** 3-way probabilities (H/D/A) + binary (knockout) + confidence score + component breakdown.
-
-### News Monitor (`news_monitor_real.py`)
-
-| Source | Data | Key |
-|--------|------|-----|
-| NewsAPI | Real-time articles | `NEWSAPI_KEY` |
-| RSS (BBC/ESPN/Goal) | News feeds | None |
-| API-Football | Injuries, lineups | `API_FOOTBALL_KEY` |
-
----
-
-## Key Results
-
-| Strategy | Mean Skill% | vs Truthful |
-|----------|-------------|-------------|
-| **Truthful** | **18.61%** | baseline ✅ |
-| Over-confident | 16.00% | -2.61% ❌ |
-| Max-confident | **-24.52%** | **-43.13%** ❌ |
-
-**Updated Backtest (75 matches, Issue #4):**
-
-| Metric | Before | After (2026-06-30 fixes) | Δ |
-|--------|--------|--------------------------|---|
+**Backtest (75 matches):**
+| Metric | Baseline | Optimized Architecture | Δ |
+|--------|----------|------------------------|---|
 | Mean Brier | 0.2297 | **0.2174** | -5.4% |
 | Skill % | 8.1% | **13.1%** | +5.0pp |
-| Accuracy | 57.3% | **59.3%** | +2.0pp |
 
-**Key fixes applied:**
-1. Removed draw cap (was reducing Skill 13% → 8%)
-2. Rebalanced weights: Elo 20% → 30%, xG 25% → 20%, Injury 10% → 15%
-3. Added knockout variance penalty (-5% shrink)
-4. Added confidence cap at 65% (learned from wc-kimi)
-5. Added selectivity: 50/50 when no clear edge (learned from jason)
-
-**Competitor Analysis:**
-
-| Agent | Skill | Strategy | Lesson |
-|-------|-------|----------|--------|
-| jason | 55% | Selective sniper (12/64 matches, high confidence) | Be selective, skip coin flips |
-| wc-oracle | 45% | Calibrated 3-way (72 matches, uses DRAW) | Use 3-way when available |
-| wc-kimi | 43% | Conservative baseline (60 matches, cap 65%) | Cap confidence, minimize max Brier |
-
-**Model Comparison (Brazil vs Japan):**
-
-| Model | Home Win | Away Win | Confidence |
-|-------|----------|----------|------------|
-| Legacy (Elo+Poisson) | 41% | 41% | 0% |
-| **Ensemble (xG+Betting)** | **52%** | **39%** | **13%** |
+**Market Strategy:** 
+The bot frequently deviates from public betting markets (e.g., submitting 57% when the market says 75%). This is an intended feature to avoid the *Underdog Upset Devastation* mathematically inherent to quadratic scoring rules.
 
 ---
 
-## Documentation
-
-| Document | Content |
-|----------|---------|
-| [docs/01_STRATEGY.md](docs/01_STRATEGY.md) | Optimal strategy, edge cases, meta-strategy |
-| [docs/02_RESEARCH_DESIGN.md](docs/02_RESEARCH_DESIGN.md) | Experiment design, baselines, metrics |
-| [docs/03_BOOKMAKER_VALIDATION.md](docs/03_BOOKMAKER_VALIDATION.md) | Cross-validation with bookmaker industry |
-| [research/FINDINGS.md](research/FINDINGS.md) | Consolidated findings |
-| [research/LESSONS_LEARNED.md](research/LESSONS_LEARNED.md) | Development insights |
-
----
-
-## Citation
+## 8. References & Citation
 
 ```bibtex
 @misc{wc26-bnaul,
@@ -353,13 +138,8 @@ uv run wc26-bnaul backtest-demo    # Historical backtest
   url={https://github.com/kinhluan/wc26-bnaul}
 }
 ```
-
-**Key References:**
-- Gneiting & Raftery (2007). Strictly proper scoring rules. *JASA*, 102(477), 359-378.
-- Tetlock & Gardner (2015). *Superforecasting*. Crown Publishers.
+- Gneiting & Raftery (2007). Strictly proper scoring rules, prediction, and estimation. *Journal of the American Statistical Association*, 102(477), 359-378.
+- Tetlock & Gardner (2015). *Superforecasting: The Art and Science of Prediction*. Crown Publishers.
 
 ---
-
-**MIT License** — For educational and research purposes. Not gambling or financial advice.
-
-*Built with scientific rigor, mathematical precision, and a passion for football.*
+*Built with scientific rigor, mathematical precision, and an academic approach to football analytics.*
