@@ -95,47 +95,108 @@ def call_llm_api(prompt: str, dry_run: bool = False, cli_mode: bool = False) -> 
         print(f"\n[DRY RUN] Would call LLM API. Returning default adjustment: 0.0")
         return 0.0
 
-    # --- Real API call mode (production) ---
+    # --- Real API call mode (production or interactive) ---
     # Thử gọi API nếu đã cài thư viện openai
     try:
         import os
+        # Nếu có cờ --ask-agent (hoặc --ask-kimi cũ), dùng cơ chế Copy-Paste thủ công (Human-in-the-loop)
+        import sys
+        if "--ask-agent" in sys.argv or "--ask-kimi" in sys.argv:
+            print(f"\n{'='*60}")
+            print(f"🤖 LLM PROMPT (Hãy copy nội dung dưới đây dán vào ChatGPT/Kimi/Claude):")
+            print(f"{'='*60}")
+            print(prompt)
+            print(f"{'='*60}")
+            
+            while True:
+                print("\n📝 Dán câu trả lời của AI vào đây (Nhấn Ctrl+D / Ctrl+Z ở dòng mới khi dán xong):")
+                try:
+                    raw_input = sys.stdin.read()
+                    # Reset stdin để có thể dùng input() ở bước sau
+                    sys.stdin = open('/dev/tty')
+                except KeyboardInterrupt:
+                    print("\n[ASK AGENT] Interrupted. Returning 0.0")
+                    return 0.0
+                except Exception:
+                    pass
+                
+                adjustment = _parse_adjustment_from_text(raw_input)
+                
+                print(f"\n{'='*60}")
+                print(f"🎯 HỆ THỐNG ĐỌC ĐƯỢC:")
+                print(f"  AI tư vấn điều chỉnh: {adjustment:+.1f}%")
+                print(f"{'='*60}")
+                
+                while True:
+                    try:
+                        val = input(f"👉 Bạn có chốt con số {adjustment:+.1f}% này không? [Nhập số khác để Override / Nhấn Enter để Đồng ý]: ").strip()
+                        if not val:
+                            print(f"✅ Đã chốt: {adjustment:+.1f}%")
+                            return adjustment
+                        override_adj = float(val.replace("%", ""))
+                        print(f"✅ Đã ghi đè thành: {override_adj:+.1f}%")
+                        return override_adj
+                    except ValueError:
+                        print("❌ Lỗi: Vui lòng nhập một số hợp lệ (ví dụ: -2.5 hoặc 1.0)")
+                        
+        # Nếu có API Key, dùng chế độ API tự động (Production / --interactive)
         api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("KIMI_API_KEY")
         if not api_key:
             raise RuntimeError(
-                "[LLM API] CRITICAL ERROR: No API key found (OPENAI_API_KEY or KIMI_API_KEY).\n"
-                "Set one of these environment variables in your .env file:\n"
-                "  OPENAI_API_KEY=your_key\n"
-                "  KIMI_API_KEY=your_key\n"
-                "The agent cannot run without LLM access. Aborting."
+                "[LLM API] CRITICAL ERROR: No API key found and --ask-agent not used.\n"
+                "To use manual copy-paste mode, run with --ask-agent flag.\n"
+                "To use auto mode, set OPENAI_API_KEY or KIMI_API_KEY in .env"
             )
-
-        # Thử dùng openai client (tương thích với nhiều provider: OpenAI, Kimi, v.v.)
-        try:
-            from openai import OpenAI
-        except ImportError:
-            raise RuntimeError(
-                "[LLM API] CRITICAL ERROR: 'openai' package not installed.\n"
-                "Install it with: pip install openai\n"
-                "The agent cannot run without LLM access. Aborting."
-            )
-
-        client = OpenAI(api_key=api_key, base_url=os.environ.get("OPENAI_BASE_URL"))
+        
+        # Gọi API thật (giả lập import openai)
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key, base_url="https://api.moonshot.cn/v1" if "KIMI" in os.environ else None)
+        
+        print("\n⏳ Đang lấy tư vấn từ AI Agent...")
         response = client.chat.completions.create(
-            model=os.environ.get("LLM_MODEL", "gpt-4"),
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=150,
+            model="moonshot-v1-8k" if "KIMI" in os.environ else "gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a football prediction assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
         )
-        content = response.choices[0].message.content
-        adjustment = _parse_adjustment_from_text(content)
-        print(f"[LLM API] Adjustment from API: {adjustment:+.1f}%")
+        llm_response = response.choices[0].message.content
+        adjustment = _parse_adjustment_from_text(llm_response)
+        
+        # Nếu có cờ --interactive (được truyền ngầm qua sys.argv hoặc biến môi trường)
+        if "--interactive" in sys.argv:
+            print(f"\n{'='*60}")
+            print(f"🤖 AI TƯ VẤN:")
+            print(f"{'='*60}")
+            print(llm_response)
+            print(f"{'='*60}")
+            
+            while True:
+                try:
+                    val = input(f"\n👉 Bạn có đồng ý với điều chỉnh {adjustment:+.1f}% không? [Nhập số khác để Override / Nhấn Enter để Đồng ý]: ").strip()
+                    if not val:
+                        return adjustment
+                    # Nếu user tự nhập số
+                    override_adj = float(val.replace("%", ""))
+                    print(f"✅ Đã ghi đè thành: {override_adj:+.1f}%")
+                    return override_adj
+                except ValueError:
+                    print("❌ Lỗi: Vui lòng nhập một số hợp lệ (ví dụ: -2.5 hoặc 1.0)")
+                except KeyboardInterrupt:
+                    print("\n[INTERACTIVE] Interrupted. Returning 0.0")
+                    return 0.0
+                    
         return adjustment
 
-    except RuntimeError:
-        raise  # Re-raise critical errors (missing API key, missing package)
+    except ImportError:
+        print("\n[LLM API] openai library not found. Please run: pip install openai")
+        raise
     except Exception as e:
-        print(f"[LLM API] Error calling API: {e}. Returning 0.0")
-        return 0.0
+        print(f"\n[LLM API] Error calling API: {e}")
+        raise
+
+
 
 
 def _parse_adjustment_from_text(text: str) -> float:
@@ -1251,6 +1312,8 @@ def main():
     parser.add_argument("--live", action="store_true", help="Actually submit")
     parser.add_argument("--match", help="Specific match ID (default: all open)")
     parser.add_argument("--cli-mode", action="store_true", help="Enable CLI mode: print full LLM prompt to stdout and read ADJUSTMENT from stdin (for kimi-cli or other external agent CLI)")
+    parser.add_argument("--ask-agent", action="store_true", help="Manual copy-paste mode: ask any LLM agent (Kimi/ChatGPT/Claude) in browser and paste response back")
+    parser.add_argument("--ask-kimi", action="store_true", help=argparse.SUPPRESS)  # deprecated alias, still works
     parser.add_argument("--fast", action="store_true", help="Skip news check (NOT RECOMMENDED)")
     
     args = parser.parse_args()
@@ -1258,7 +1321,9 @@ def main():
     dry_run = not args.live
     # Default: check_news = True (always check news unless --fast)
     check_news = not args.fast
-    run_auto_agent(dry_run=dry_run, match_id=args.match, check_news=check_news, cli_mode=args.cli_mode)
+    # Support both --ask-agent and deprecated --ask-kimi
+    cli_mode = args.cli_mode or args.ask_agent or args.ask_kimi
+    run_auto_agent(dry_run=dry_run, match_id=args.match, check_news=check_news, cli_mode=cli_mode)
 
 
 if __name__ == "__main__":

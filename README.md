@@ -40,7 +40,7 @@ The baseline probability is calculated mathematically in `ensemble_predictor.py`
 - **Squad Depth (5%)**: Market value normalization (e.g., Transfermarkt Euro valuation).
 
 ### 2.2 Qualitative Layer (LLM / Human-in-the-loop)
-The system injects JSON-structured match context into a Large Language Model (via CLI `--ask-kimi` or API). The LLM acts as an **expert qualitative approver**, outputting a marginal adjustment (e.g., `-2.5%` or `+1.5%`) to account for variables the rigid math cannot see (e.g., *squad morale, weather, unquantifiable tactical shifts*).
+The system injects JSON-structured match context into a Large Language Model (via CLI `--ask-agent` or API). The LLM acts as an **expert qualitative approver**, outputting a marginal adjustment (e.g., `-2.5%` or `+1.5%`) to account for variables the rigid math cannot see (e.g., *squad morale, weather, unquantifiable tactical shifts*).
 
 ---
 
@@ -99,9 +99,14 @@ uv sync
 ```
 
 **Interactive Human-in-the-loop Prediction:**
-Generates a prompt payload, pauses for your LLM (Kimi/ChatGPT) analysis, and applies the adjustment.
+Generates a prompt payload, pauses for your LLM (Kimi/ChatGPT/Claude) analysis, and applies the adjustment.
 ```bash
-./wc26.sh auto-agent --match m080 --ask-kimi
+./wc26.sh auto-agent --match m080 --ask-agent
+```
+
+**Deprecated (still works):**
+```bash
+./wc26.sh auto-agent --match m080 --ask-kimi  # alias for --ask-agent
 ```
 
 **Automated Pipeline:**

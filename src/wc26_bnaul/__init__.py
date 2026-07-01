@@ -502,7 +502,9 @@ def cmd_suggest_weights():
 def cmd_auto_agent(args):
     """Run fully autonomous prediction agent."""
     from .auto_agent import run_auto_agent
-    run_auto_agent(dry_run=not args.live, match_id=args.match, cli_mode=args.ask_kimi)
+    # Support both --ask-agent and deprecated --ask-kimi / --cli-mode
+    cli_mode = getattr(args, 'ask_agent', False) or getattr(args, 'ask_kimi', False) or getattr(args, 'cli_mode', False)
+    run_auto_agent(dry_run=not args.live, match_id=args.match, cli_mode=cli_mode)
 
 
 def main():
@@ -587,7 +589,8 @@ def main():
     p_auto.add_argument("--dry-run", action="store_true", help="Preview without submitting")
     p_auto.add_argument("--live", action="store_true", help="Actually submit")
     p_auto.add_argument("--match", help="Specific match ID (default: all open)")
-    p_auto.add_argument("--ask-kimi", action="store_true", help="Interactively ask user for Kimi's adjustment")
+    p_auto.add_argument("--ask-agent", action="store_true", help="Interactively ask external CLI agent (kimi-cli, claude, etc.) for adjustment via stdin")
+    p_auto.add_argument("--cli-mode", action="store_true", help=argparse.SUPPRESS)  # deprecated alias
 
     # performance
     sub.add_parser("performance", help="Show prediction performance & logs")
